@@ -1,0 +1,567 @@
+PRODUCT REQUIREMENTS DOCUMENT & TECHNICAL BRIEF
+
+EL GHASSALA (
+
+‫)الغّس الة‬
+
+INDEPENDENT FULL REBUILD SPECIFICATION
+
+1. PROJECT MISSION
+Build a complete, professional Android application named El Ghassala (
+
+‫ )الغّس الة‬from scratch.
+
+El Ghassala is an offline-first financial and transportation expense management application. Its main
+purpose is to help users organize shared transportation costs, daily expenses, money transfers,
+participant balances, driver refunds, settlements, saved routes, and financial reports in one simple and
+reliable place.
+This is not a request to create a basic prototype or a visually attractive mockup. The objective is to deliver
+a fully functional, stable, polished, production-quality Android application.
+The application must combine three essential qualities:
+1. Professional functionality: Every feature must work correctly, with reliable calculations and persistent
+data.
+2. Exceptional usability: The application must be understandable and comfortable even for users with
+limited technical experience.
+3. Outstanding visual quality: The interface should feel modern, premium, polished, visually impressive,
+and thoughtfully designed.
+
+2. CREATIVE AND DESIGN FREEDOM
+You have complete creative freedom over the application's visual identity and interface design.
+Do not follow rigid instructions about:
+The exact position of buttons or navigation elements.
+Whether a particular control belongs on the right, left, top, or bottom.
+Specific colors or color combinations.
+Specific gradients or gradient directions.
+Animation styles, durations, or transitions.
+Card shapes, border radii, spacing, or component arrangements.
+The exact layout of individual screens.
+Choose the best design decisions independently.
+You are expected to establish a coherent and recognizable design system, including:
+
+El Ghassala (
+
+‫ — )الغّسالة‬Product Requirements & Development Brief
+
+Page 1 of 13
+
+A premium color palette.
+Beautiful gradients where appropriate.
+Thoughtful typography.
+Clear visual hierarchy.
+Consistent iconography.
+Smooth and meaningful animations.
+Elegant transitions and feedback.
+Well-designed empty states, loading states, and error states.
+A consistent experience across the entire application.
+Important design requirement: Visual creativity must never compromise clarity, accessibility,
+performance, or ease of use. Avoid unnecessary decoration, excessive animations, confusing navigation,
+overcrowded screens, and visual effects that make the application feel heavy. The final result should look
+impressive without sacrificing practicality.
+
+3. TECHNICAL DIRECTION
+Build a native Android application. Preferred technical direction:
+Kotlin
+Jetpack Compose
+Room Database
+MVVM architecture
+Repository pattern
+Kotlin Coroutines and Flow / StateFlow
+Navigation Compose
+Material 3 or an equivalent carefully designed UI system
+Use stable and compatible dependency versions available at development time. Keep the architecture
+modular, maintainable, testable, and suitable for future expansion. Do not sacrifice code quality for
+implementation speed.
+
+4. CORE APPLICATION PRINCIPLES
+The following requirements are mandatory:
+Offline-first operation: All essential features must work without an internet connection.
+Financial records must be stored locally and persist after closing or restarting the application.
+No mandatory account registration.
+No mandatory cloud connection.
+No unnecessary collection of personal information.
+No automatic deletion of important financial records.
+
+El Ghassala (
+
+‫ — )الغّسالة‬Product Requirements & Development Brief
+
+Page 2 of 13
+
+No destructive database migration.
+Financial calculations must be centralized and independently testable.
+All important user actions must provide clear feedback.
+All forms must validate their inputs.
+Every major feature must be fully connected to the application rather than existing as an isolated
+screen.
+The application must not depend on internet access for ordinary financial operations.
+
+5. LANGUAGES AND APPEARANCE
+Support:
+Arabic as a complete RTL experience.
+English as a complete LTR experience.
+Light mode.
+Dark mode.
+Changing the language must update the entire interface consistently, including navigation, buttons,
+dialogs, forms, notifications and messages, validation errors, reports, and dates and numbers where
+appropriate.
+Avoid mixing Arabic and English interface strings unintentionally. Make sure text, icons, arrows, currency
+values, and layouts behave correctly in both RTL and LTR directions.
+
+6. MAIN DASHBOARD
+Create a comprehensive dashboard that gives users a clear overview of their financial activity. It should
+provide convenient access to the main application sections:
+Transportation
+Cash Expenses
+Transfers
+Statistics and Reports
+Settlement Center
+Saved Routes
+People Management
+Search and History
+Settings
+The dashboard should present useful financial information, such as: Total recorded expenses,
+Transportation expenses, Cash expenses, Transfers as a separate financial category, Outstanding driver
+refunds, Important unsettled balances, Recent activity, and Quick access to common actions.
+
+El Ghassala (
+
+‫ — )الغّسالة‬Product Requirements & Development Brief
+
+Page 3 of 13
+
+The dashboard should prioritize useful information rather than displaying every available metric at once.
+Use sensible summaries and allow users to navigate to detailed information when needed.
+
+7. DAY MANAGEMENT
+The application must organize financial activity into individual days. Users should be able to:
+Create a new day.
+Give the day a custom title.
+Select or record its date.
+Add participants.
+View all transactions associated with that day.
+Edit day information.
+View a complete day summary.
+Close a day.
+Review previously created days.
+Search through historical days.
+Each day must have a clear financial status. Closing a day should not delete or hide its financial
+information. Closed days should remain available for historical review and reporting. Prevent accidental
+duplicate or inconsistent records.
+
+8. TRANSPORTATION MANAGEMENT
+Transportation is one of the application's primary features. Users must be able to record shared trips
+involving multiple participants.
+A transportation record should support:
+Starting location.
+Destination.
+Fare per person.
+Participants who used the transportation.
+Total expected transportation cost.
+The person or people who paid the driver.
+The amount paid by each participant.
+Individual payment differences.
+Additional notes.
+Date and time.
+The application must automatically calculate: Total transportation cost, Total amount actually paid, Each
+participant's expected share, Each participant's actual payment, Overpayments, Underpayments, and
+Amounts owed by or to the driver.
+
+El Ghassala (
+
+‫ — )الغّسالة‬Product Requirements & Development Brief
+
+Page 4 of 13
+
+CRITICAL FINANCIAL CALCULATION EXAMPLE (MANDATORY ACCEPTANCE TEST)
+
+Scenario:
+Ahmed and Hima used the same transportation.
+The fare per person is 10 EGP.
+Expected total cost is 20 EGP.
+Ahmed paid the driver 20 EGP.
+Hima also paid the driver 10 EGP.
+The actual amount collected by the driver is 30 EGP.
+Required Outcome:
+Expected transportation cost = 20 EGP.
+Actual amount paid = 30 EGP.
+The driver owes Ahmed 10 EGP.
+Hima has no outstanding transportation payment.
+The additional 10 EGP must not disappear from financial calculations.
+The application must recognize this as a driver refund situation, not incorrectly mark everything as
+settled. This example is an essential acceptance test.
+
+9. DRIVER REFUND MANAGEMENT
+Create a reliable system for tracking money owed by drivers to participants. Whenever a transportation
+transaction creates an overpayment, the application must preserve the refund as a separate financial
+record.
+The user should receive a clear confirmation prompt asking whether the refund has actually been
+received. Possible outcomes:
+Yes: Mark the refund as collected.
+No: Keep the refund outstanding.
+Dismiss or go back: Preserve the outstanding refund without marking it as collected.
+Requirements: Track refunds independently for each participant; support multiple participants receiving
+refunds from the same transaction; store the refund amount, collection status, and collection date when
+applicable; preserve historical refund information; allow users to review outstanding and collected
+refunds; reflect refund status correctly in statistics, reports, backups, and exports. Never assume that a
+refund has been received simply because the transportation transaction was saved.
+
+10. CASH EXPENSES
+Create a dedicated section for ordinary shared cash expenses. Users should be able to record expenses
+such as food, supplies, purchases, or any other shared cost.
+
+El Ghassala (
+
+‫ — )الغّسالة‬Product Requirements & Development Brief
+
+Page 5 of 13
+
+Each expense should support: Expense title or description, Total amount, Date and time, Person or people
+who paid, Amount paid by each person, Beneficiaries or people sharing the expense, Individual beneficiary
+shares, and Notes.
+The application must calculate each person's financial contribution and obligation accurately. Allow the
+expense to be edited or reviewed later without corrupting the associated balances. Transportation and
+cash expenses must remain distinguishable in financial reports.
+
+11. TRANSFERS
+Create a separate section for recording money transfers between participants. Users should be able to:
+Select the sender, Select the receiver, Enter the transfer amount, Add a date and time, Add optional notes,
+Review transfer history, Edit or delete a transfer with appropriate confirmation.
+Transfers must affect participant balances correctly.
+Important: Transfers are not expenses. Never include transfers in actual spending totals, transportation
+expense totals, cash expense totals, or average spending calculations. They must remain a separate
+financial movement category.
+
+12. SMART SETTLEMENT CENTER
+Build a central settlement system that calculates financial balances across all relevant open days. The
+Settlement Center should provide: Total outstanding balances, Amounts owed to the current user,
+Amounts the current user owes, Participant balance summaries, Outstanding driver refunds, Collected
+driver refunds, Suggested settlements, and Detailed participant ledgers.
+
+Smart Settlement Suggestions
+Create a debt simplification mechanism that reduces unnecessary individual payments. For example, if
+several participants owe money to each other, the system should calculate a smaller and clearer set of
+settlement transactions. The system should suggest practical payments without changing historical
+records automatically. Users must explicitly confirm when they record a settlement.
+
+People Balances
+Provide a clear list of participants and their current net balances. Each person should have a detailed
+ledger showing: Transportation obligations, Cash expense contributions, Transfers sent, Transfers
+received, Settlements, Outstanding refunds, Collected refunds, and Current net balance.
+
+Important Rules
+Closed days must be handled according to a consistent settlement policy.
+Driver refunds must remain separate from participant-to-participant debts.
+Transfers must affect balances but must not increase spending totals.
+Settlement records must not be counted as new expenses.
+Avoid double-counting transactions.
+
+El Ghassala (
+
+‫ — )الغّسالة‬Product Requirements & Development Brief
+
+Page 6 of 13
+
+Recalculations must produce consistent results.
+
+13. SAVED ROUTES
+Create a dedicated Saved Routes feature. Users should be able to save frequently used transportation
+routes. Each saved route should contain: Route name, Origin, Destination, Default fare, Usage count,
+Creation date, and Last update date.
+Users should be able to: Add routes, Edit routes, Delete routes with confirmation, Search routes, Sort by
+most frequently used, Sort by recently used, and Start a transportation transaction directly from a saved
+route.
+When a route is selected, prefill Origin, Destination, and Default fare. All fields must remain editable.
+Selecting a saved route must never reuse previous participants, payments, or transaction details. It must
+not automatically create a transportation transaction. Provide an optional action to save a newly entered
+route for future use when recording transportation. Prevent accidental duplicate routes through sensible
+duplicate detection.
+
+14. PEOPLE MANAGEMENT
+Create a dedicated participant management feature. Users should be able to: Add a person, Edit a
+person's information, View a person's financial summary, View their transaction history, View their current
+balance, Review their transportation activity, Review their cash expense activity, Review transfers, Review
+driver refunds, and Search participants.
+Prevent accidental duplicate people. Use stable internal person identifiers rather than relying only on
+display names. When a person is renamed, historical transactions must remain correctly associated with
+that person. Do not silently delete a participant who is referenced by historical financial records. If deletion
+is supported, provide a safe archival or deactivation approach that preserves financial history.
+
+15. STATISTICS AND REPORTS
+Create a comprehensive Statistics and Reports section. It should help users understand their financial
+activity through clear visualizations and useful summaries.
+Support the following periods: Today, This Week, This Month, This Year, Custom Date Range.
+Display useful metrics such as: Total actual expenses, Transportation expenses, Cash expenses, Transfer
+volume separately, Outstanding driver refunds, Collected driver refunds, Average daily spending,
+Comparison with the previous equivalent period, Spending trends, Expense category distribution, Daily and
+monthly activity.
+Provide appropriate charts, graphs, and visual summaries. Do not use misleading charts or combine
+financial categories that should remain separate.
+
+El Ghassala (
+
+‫ — )الغّسالة‬Product Requirements & Development Brief
+
+Page 7 of 13
+
+Calculation Rules
+Actual expenses: Transportation expenses + Cash expenses.
+Transfers are excluded.
+Driver refunds must be reported separately and must not be incorrectly added to or subtracted from
+ordinary spending totals.
+Use consistent date boundaries and document the calculation rules.
+Ensure that the statistics shown in the interface match exported reports.
+
+16. SEARCH AND HISTORY
+Provide a unified search experience for historical financial records. Users should be able to search by
+relevant information such as: Day title, Participant name, Origin, Destination, Expense description,
+Transaction type, Date, and Notes.
+Provide useful filters and clear results. Allow users to open a result and inspect its complete details.
+Historical information should remain accessible and organized.
+
+17. BACKUP AND RESTORE
+Create a reliable local backup and restoration system. Users must be able to export their application data
+into a portable backup file and restore it later.
+The backup should include all essential information: Days, Participants, Transactions, Driver refunds,
+Saved routes, People information, Relevant settings where appropriate, and Any additional data necessary
+to reconstruct the application state.
+Requirements: Use a versioned backup format; validate backup files before importing; handle older
+backup formats safely; preserve relationships between database records; avoid duplicate imports; provide
+clear confirmation before replacing or merging existing data; handle corrupted or incomplete backups
+gracefully; never silently overwrite important user information; provide clear success and failure
+messages.
+The backup system must work offline. Do not introduce mandatory cloud storage or account-based
+synchronization.
+
+18. PDF AND CSV EXPORT
+Provide professional export capabilities.
+
+PDF Reports
+PDF exports should be clean, readable, and professionally formatted. Support useful reports such as:
+Daily financial reports, Transportation reports, Cash expense reports, Transfer reports, Participant ledgers,
+Settlement summaries, Driver refund reports, and Statistics reports.
+
+El Ghassala (
+
+‫ — )الغّسالة‬Product Requirements & Development Brief
+
+Page 8 of 13
+
+Arabic and English must render correctly. Ensure RTL text, numbers, currency values, and transportation
+routes are displayed correctly. The direction of payment descriptions must be accurate. For example, a
+description stating that Ahmed pays Hima must never be reversed to say that Hima pays Ahmed.
+
+CSV Export
+Allow users to export relevant transaction data in a structured format suitable for spreadsheet
+applications. Use clear column names, consistent values, and appropriate encoding. PDF and CSV totals
+must agree with the application's financial calculations.
+
+19. SETTINGS
+Create a clear settings area that allows users to manage: Application language, Light or dark appearance,
+Backup and restore, Data export, Application information, Developer information, and Other essential
+preferences.
+Keep settings understandable and avoid unnecessary complexity.
+
+20. USER EXPERIENCE REQUIREMENTS
+The application must be designed for real daily use. Important UX requirements:
+Make common actions easy to discover.
+Keep forms simple and organized.
+Use clear labels and helpful explanations.
+Minimize unnecessary steps.
+Provide meaningful confirmation for destructive actions.
+Prevent accidental duplicate submissions.
+Preserve user input when reasonable after validation errors.
+Make financial results easy to understand.
+Use consistent navigation.
+Ensure all major screens are accessible.
+Support small and medium Android screens.
+Handle keyboard visibility and scrolling correctly.
+Avoid clipped text and overflowing layouts.
+Make empty states useful and informative.
+Use accessible contrast and readable typography.
+The application should feel intuitive without requiring users to read a manual.
+
+21. PERFORMANCE AND RELIABILITY
+Performance is a core requirement, not an optional improvement. The application should:
+
+El Ghassala (
+
+‫ — )الغّسالة‬Product Requirements & Development Brief
+
+Page 9 of 13
+
+Launch quickly.
+Navigate smoothly.
+Avoid unnecessary recomposition.
+Avoid blocking the main thread.
+Use efficient database queries.
+Handle larger transaction histories.
+Avoid memory leaks.
+Avoid unnecessary background work.
+Maintain responsive interactions.
+Use animations carefully.
+Preserve data integrity during interruptions or application restarts.
+Do not add expensive visual effects that reduce performance on ordinary Android devices.
+
+22. DATABASE AND ARCHITECTURE REQUIREMENTS
+Design a clean database schema that supports the complete application. The data model should
+represent, at minimum: Days, People, Transactions, Driver refunds, Saved routes, and Any additional
+entities required for settlement or application settings.
+Use stable primary keys and proper relationships. Use database transactions for operations that modify
+multiple related records. Use explicit, tested database migrations. Never use destructive database resets
+as a shortcut.
+Keep financial calculations in dedicated domain or utility logic rather than scattering formulas throughout
+UI screens. Separate: UI, ViewModels, Domain logic, Repositories, Database entities, DAOs, Backup and
+export services.
+
+23. FINANCIAL INTEGRITY AND TESTING
+Financial correctness is more important than visual appearance. Create automated unit tests for the
+financial engine. At minimum, test:
+1. Equal transportation payments
+
+10. Transfers excluded from spending
+
+2. Transportation underpayment
+
+11. Settlement calculations
+
+3. Transportation overpayment
+
+12. Cross-day balances
+
+4. Multiple people paying driver
+
+13. Closed-day handling
+
+5. Multiple participants receiving refunds
+
+14. Saved route selection
+
+6. Collected driver refunds
+
+15. Backup and restore
+
+7. Outstanding driver refunds
+
+16. Historical records after renaming
+
+8. Shared cash expenses
+
+17. Statistics date ranges
+
+9. Transfers between participants
+
+18. PDF & CSV calculation consistency
+
+El Ghassala (
+
+‫ — )الغّسالة‬Product Requirements & Development Brief
+
+Page 10 of 13
+
+Also perform integration tests and UI tests for critical workflows. Do not consider the project complete
+merely because it compiles.
+
+24. ERROR HANDLING AND DATA SAFETY
+Handle unexpected conditions gracefully. Examples include: Invalid amounts, Missing required
+information, Duplicate submissions, Missing participants, Invalid backup files, Database errors,
+Interrupted operations, and Inconsistent historical data.
+Display understandable messages rather than technical stack traces. Never silently discard financial
+information. For important operations, ensure database consistency even if the application closes
+unexpectedly.
+
+25. PROJECT STRUCTURE AND MAINTAINABILITY
+Choose a clean, scalable project structure. Organize the code by feature and architectural responsibility.
+Avoid: One enormous source file, Duplicated financial formulas, Hardcoded UI strings, Excessive global
+state, Unnecessary dependencies, Placeholder functionality, Fake buttons, and Screens that only look
+functional but do not persist data.
+Use reusable UI components where appropriate. Keep the implementation understandable and
+maintainable.
+
+26. DEVELOPMENT EXECUTION STRATEGY
+You are responsible for the complete implementation. Do not stop after producing a design concept,
+technical report, or basic skeleton. Follow a structured development process:
+
+Stage 1 — Project Foundation
+
+Inspect environment, establish project architecture, configure dependencies, implement database
+foundation, establish localization and theme infrastructure.
+
+Stage 2 — Core Financial Features
+
+Day management, transportation, driver refunds, cash expenses, transfers, financial calculation
+engine.
+
+Stage 3 — Organization Features
+
+People management, saved routes, search and history.
+
+Stage 4 — Financial Intelligence
+
+Settlement Center, smart settlement suggestions, statistics and reports.
+
+El Ghassala (
+
+‫ — )الغّسالة‬Product Requirements & Development Brief
+
+Page 11 of 13
+
+Stage 5 — Data Management
+
+Backup and restore, PDF export, CSV export.
+
+Stage 6 — Final Quality
+
+Complete UI integration, RTL/LTR verification, light/dark verification, performance optimization,
+automated testing, manual workflow testing, release build verification.
+
+27. FINAL DELIVERABLES
+The final delivery must include:
+1. A complete Android Studio project.
+2. All source code.
+3. A functional application, not a prototype.
+4. A successful release build.
+5. Database schema and migration implementation.
+6. Automated tests for critical business logic.
+7. Working backup and restore.
+8. Working PDF and CSV exports.
+9. Complete Arabic and English localization.
+10. A concise technical summary of the architecture.
+11. A list of completed features.
+12. A list of any remaining limitations, if any.
+
+28. FINAL QUALITY STANDARD
+The final application must satisfy all of these conditions:
+It looks and feels like a professionally developed Android product.
+Its interface is visually impressive and coherent.
+It is easy to understand and operate.
+It supports Arabic and English correctly.
+It works offline.
+Its financial calculations are accurate.
+Its data survives application restarts.
+Its reports match its actual records.
+Its backup and restore system is reliable.
+Its performance is smooth.
+Its architecture is maintainable.
+
+El Ghassala (
+
+‫ — )الغّسالة‬Product Requirements & Development Brief
+
+Page 12 of 13
+
+Its main workflows work from beginning to end.
+FINAL EXECUTION NOTE
+
+Use your own design judgment and technical expertise. You are not restricted to copying an old
+interface or following a predefined arrangement of controls. You have full freedom to create the best
+possible visual experience, color system, gradients, animations, layouts, and navigation. However,
+the functional requirements, financial rules, data safety requirements, and acceptance tests in this
+document are mandatory.
+
+El Ghassala (
+
+‫ — )الغّسالة‬Product Requirements & Development Brief
+
+Page 13 of 13
+
+

@@ -1,0 +1,1 @@
+-keep class dev.ahmeddawood.elghassala.data.db.** { *; }
