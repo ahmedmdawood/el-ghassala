@@ -10,5 +10,6 @@ class ElGhassalaApp : Application() {
     val repository: GhassalaRepository by lazy { GhassalaRepository(database) }
     val settings: SettingsRepository by lazy { SettingsRepository(this) }
     val avatarStore: dev.ahmeddawood.elghassala.settings.AvatarStore by lazy { dev.ahmeddawood.elghassala.settings.AvatarStore(this, settings) }
+    val openingCash: dev.ahmeddawood.elghassala.settings.OpeningCashStore by lazy { dev.ahmeddawood.elghassala.settings.OpeningCashStore(settings) }
     val jokes: dev.ahmeddawood.elghassala.playful.JokeRepository by lazy { dev.ahmeddawood.elghassala.playful.JokeRepository(this) }
 }

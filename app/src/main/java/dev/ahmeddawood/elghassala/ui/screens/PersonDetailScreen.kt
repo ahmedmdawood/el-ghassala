@@ -77,15 +77,18 @@ fun PersonDetailScreen(vm: AppViewModel, nav: NavHostController, personId: Long)
     }
 
     val ledger = ledgers[personId]
-    val myTransports = records.participants.filter { it.personId == personId }
-        .mapNotNull { p -> records.transports.firstOrNull { it.id == p.transportId }?.let { p to it } }
-        .sortedByDescending { it.second.dateMillis }
-    val myExpenses = records.expenses.filter { e ->
-        records.payers.any { it.expenseId == e.id && it.personId == personId } ||
-            records.beneficiaries.any { it.expenseId == e.id && it.personId == personId }
+    val myTransports = remember(records, personId) {
+        records.participants.filter { it.personId == personId }
+            .mapNotNull { p -> records.transportsById[p.transportId]?.let { p to it } }
+            .sortedByDescending { it.second.dateMillis }
     }
-    val myTransfers = records.transfers.filter { it.fromPersonId == personId || it.toPersonId == personId }
-    val myRefunds = records.refunds.filter { it.personId == personId && !it.collected }
+    val myExpenses = remember(records, personId) {
+        val ids = records.payers.filter { it.personId == personId }.map { it.expenseId }.toSet() +
+            records.beneficiaries.filter { it.personId == personId }.map { it.expenseId }.toSet()
+        records.expenses.filter { it.id in ids }
+    }
+    val myTransfers = remember(records, personId) { records.transfers.filter { it.fromPersonId == personId || it.toPersonId == personId } }
+    val myRefunds = remember(records, personId) { records.pendingRefunds.filter { it.personId == personId } }
 
     Scaffold(
         topBar = {
@@ -166,7 +169,7 @@ fun PersonDetailScreen(vm: AppViewModel, nav: NavHostController, personId: Long)
                 item { EmptyState(Icons.Filled.SwapHoriz, stringResource(R.string.no_activity_yet)) }
             }
 
-            items(myTransports.take(15), key = { "t-${it.second.id}" }) { (part, t) ->
+            items(myTransports.take(15), key = { "t-${it.second.id}" }, contentType = { "PersonDetailScreen-row" }) { (part, t) ->
                 SectionCard {
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.DirectionsBus, null, tint = MaterialTheme.colorScheme.primary)
@@ -182,7 +185,7 @@ fun PersonDetailScreen(vm: AppViewModel, nav: NavHostController, personId: Long)
                     }
                 }
             }
-            items(myExpenses.take(15), key = { "e-${it.id}" }) { e ->
+            items(myExpenses.take(15), key = { "e-${it.id}" }, contentType = { "PersonDetailScreen-row" }) { e ->
                 SectionCard {
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Payments, null, tint = MaterialTheme.colorScheme.tertiary)
@@ -195,7 +198,7 @@ fun PersonDetailScreen(vm: AppViewModel, nav: NavHostController, personId: Long)
                     }
                 }
             }
-            items(myTransfers.take(15), key = { "x-${it.id}" }) { x ->
+            items(myTransfers.take(15), key = { "x-${it.id}" }, contentType = { "PersonDetailScreen-row" }) { x ->
                 SectionCard {
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.SwapHoriz, null, tint = MaterialTheme.colorScheme.secondary)

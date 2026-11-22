@@ -315,4 +315,9 @@
     <string name="palette_midnight">منتصف الليل</string>
     <string name="owed_to_you_title">مستحقاتك عند الناس</string>
     <string name="mark_received">تم الاستلام</string>
+    <string name="start_day_who_title">مين بادئ اليوم معاك؟</string>
+    <string name="start_day_who_sub">اختار الناس وسجّل مع كل واحد معاه كام النهارده.</string>
+    <string name="start_day_cash">الكاش اللي معاه</string>
+    <string name="start_day_skip">تخطّي</string>
+    <string name="opening_cash_pool">كاش بداية اليوم: %1$s</string>
 </resources>

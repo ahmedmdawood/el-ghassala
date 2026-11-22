@@ -53,7 +53,7 @@ object BalanceCalculator {
         val netBalanceCents: Long
             get() = transportNetCents + expenseNetCents +
                 (transfersReceivedCents - transfersSentCents) +
-                (settlementsReceivedCents - settlementsSentCents)
+                (settlementsSentCents - settlementsReceivedCents)
     }
 
     fun ledgers(
@@ -70,7 +70,9 @@ object BalanceCalculator {
         val settleSent = mutableMapOf<Long, Long>()
         val settleReceived = mutableMapOf<Long, Long>()
 
-        transports.filter { inScope(it.dayId) }.forEach { t ->
+        // Separate Room streams can briefly deliver a transport before its riders.
+        // Ignore that incomplete snapshot instead of throwing on the UI collector.
+        transports.filter { inScope(it.dayId) && it.paid.isNotEmpty() }.forEach { t ->
             FinanceEngine.computeTransport(t.fareCents, t.paid).participantNet.forEach { (id, v) ->
                 transportNet.merge(id, v, Long::plus)
             }

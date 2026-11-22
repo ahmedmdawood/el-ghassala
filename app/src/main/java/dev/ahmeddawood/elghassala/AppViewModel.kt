@@ -29,6 +29,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import dev.ahmeddawood.elghassala.ui.components.DayCelebration
 
@@ -54,8 +56,36 @@ data class Records(
     val peopleNames: Map<Long, String> by lazy(LazyThreadSafetyMode.NONE) { people.associate { it.id to it.name } }
     val activePeople: List<PersonEntity> by lazy(LazyThreadSafetyMode.NONE) { people.filter { !it.archived } }
 
+    // One index per immutable Records snapshot, shared by every row and screen.
+    val participantsByTransport by lazy { participants.groupBy { it.transportId } }
+    val pendingRefunds by lazy { refunds.filter { !it.collected } }
+    val refundsByTransport by lazy { pendingRefunds.groupBy { it.transportId } }
+    val payersByExpense by lazy { payers.groupBy { it.expenseId } }
+    val transportsById by lazy { transports.associateBy { it.id } }
+    val daysById by lazy { days.associateBy { it.id } }
+    val transportsByDay by lazy { transports.groupBy { it.dayId } }
+    val expensesByDay by lazy { expenses.groupBy { it.dayId } }
+    val transfersByDay by lazy { transfers.groupBy { it.dayId } }
+    val daySpendTotals by lazy {
+        val totals = mutableMapOf<Long?, Long>()
+        transports.forEach { t -> totals[t.dayId] = (totals[t.dayId] ?: 0L) + (transportTotals[t.id] ?: 0L) }
+        expenses.forEach { e -> totals[e.dayId] = (totals[e.dayId] ?: 0L) + e.totalCents }
+        totals.toMap()
+    }
+    private val cachedRides by lazy {
+        transports.map { t -> dev.ahmeddawood.elghassala.domain.RouteStars.Ride(
+            t.origin, t.destination, participantsByTransport[t.id].orEmpty().map { it.personId }) }
+    }
+    val routeStarsById by lazy {
+        fun key(origin: String, destination: String) = origin.trim().lowercase(java.util.Locale.ROOT) to destination.trim().lowercase(java.util.Locale.ROOT)
+        val groups = cachedRides.groupBy { key(it.origin, it.destination) }
+        routes.associate { route -> route.id to dev.ahmeddawood.elghassala.domain.RouteStars.stars(
+            groups[key(route.origin, route.destination)].orEmpty(), route.origin, route.destination) }
+    }
+
+
     fun transportRecords(dayFilter: Set<Long>? = null): List<BalanceCalculator.TransportRecord> {
-        val parts = participants.groupBy { it.transportId }
+        val parts = participantsByTransport
         return transports
             .filter { dayFilter == null || it.dayId == null || it.dayId in dayFilter }
             .map { t ->
@@ -68,7 +98,7 @@ data class Records(
     }
 
     fun expenseRecords(dayFilter: Set<Long>? = null): List<BalanceCalculator.ExpenseRecord> {
-        val pay = payers.groupBy { it.expenseId }
+        val pay = payersByExpense
         val ben = beneficiaries.groupBy { it.expenseId }
         return expenses
             .filter { dayFilter == null || it.dayId == null || it.dayId in dayFilter }
@@ -102,19 +132,13 @@ data class Records(
         }
 
     /** Every past trip as a route + riders list, for route stars (نجم المشوار). */
-    fun rides(): List<dev.ahmeddawood.elghassala.domain.RouteStars.Ride> {
-        val parts = participants.groupBy { it.transportId }
-        return transports.map { t ->
-            dev.ahmeddawood.elghassala.domain.RouteStars.Ride(t.origin, t.destination, parts[t.id].orEmpty().map { it.personId })
-        }
-    }
+    fun rides(): List<dev.ahmeddawood.elghassala.domain.RouteStars.Ride> = cachedRides
 
     /** Per-transport grand total (fare x riders). */
-    val transportTotals: Map<Long, Long>
-        get() {
-            val counts = participants.groupBy { it.transportId }.mapValues { it.value.size }
-            return transports.associate { it.id to it.fareCents * (counts[it.id] ?: 0) }
-        }
+    val transportTotals: Map<Long, Long> by lazy {
+        transports.associate { it.id to it.fareCents * participantsByTransport[it.id].orEmpty().size }
+    }
+
 }
 
 class AppViewModel(app: Application) : AndroidViewModel(app) {
@@ -146,7 +170,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             expenses = c.first, payers = c.second, beneficiaries = c.third,
             transfers = transfers,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Records())
+    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Records())
 
     /** Ledgers honoring the closed-day settlement toggle. */
     val ledgers: StateFlow<Map<Long, BalanceCalculator.PersonLedger>> =
@@ -159,7 +183,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 refunds = rec.refundRecords(),
                 inScope = scope,
             )
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+        }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     val netBalances: StateFlow<Map<Long, Long>> = ledgers
         .map { BalanceCalculator.netBalances(it) }
@@ -280,7 +304,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun pickJoke(bucket: String): String? = jokes.pick(bucket)
 
-    fun startDay() = viewModelScope.launch {
+    private val openingCashStore = application.openingCash
+    /** dayId -> (personId -> opening cash in piasters). Days without an entry (imported or older) have none. */
+    val openingCash: StateFlow<Map<Long, Map<Long, Long>>> = openingCashStore.all
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
+
+    /** Starts today's day. [opening] maps each person starting the day to the cash they carry (may be empty). */
+    fun startDay(opening: Map<Long, Long> = emptyMap()) = viewModelScope.launch {
         if (repo.currentOpenDay() != null) return@launch
         val cal = java.util.Calendar.getInstance().apply {
             set(java.util.Calendar.HOUR_OF_DAY, 0); set(java.util.Calendar.MINUTE, 0)
@@ -290,7 +320,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         var title = base
         var n = 2
         while (true) {
-            try { repo.saveDay(null, title, cal.timeInMillis); break }
+            try {
+                val newId = repo.saveDay(null, title, cal.timeInMillis)
+                if (opening.isNotEmpty()) openingCashStore.set(newId, opening)
+                break
+            }
             catch (e: DuplicateNameException) { title = "$base ($n)"; n++ }
         }
         feedback(

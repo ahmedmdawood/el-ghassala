@@ -76,7 +76,7 @@ class AvatarStore(private val context: Context, private val settings: SettingsRe
             val out = Bitmap.createScaledBitmap(square, 320, 320, true)
             val file = File(dir, "p$personId-${System.currentTimeMillis()}.jpg")
             file.outputStream().use { out.compress(Bitmap.CompressFormat.JPEG, 88, it) }
-            deleteFile(personId)
+            deleteFile(personId, except = file.name)
             update { it[personId] = Avatar("photo", file.name) }
             true
         }.getOrDefault(false)
@@ -89,8 +89,8 @@ class AvatarStore(private val context: Context, private val settings: SettingsRe
 
     fun photoFile(a: Avatar): File = File(dir, a.value)
 
-    private suspend fun deleteFile(personId: Long) {
+    private suspend fun deleteFile(personId: Long, except: String? = null) {
         // Remove any previous photo for this person.
-        dir.listFiles()?.filter { it.name.startsWith("p$personId-") }?.forEach { it.delete() }
+        dir.listFiles()?.filter { it.name.startsWith("p$personId-") && it.name != except }?.forEach { it.delete() }
     }
 }

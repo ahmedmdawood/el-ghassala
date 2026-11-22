@@ -80,9 +80,9 @@ fun TransportScreen(vm: AppViewModel, nav: NavHostController) {
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                items(records.transports, key = { it.id }) { t ->
-                    val riders = records.participants.filter { it.transportId == t.id }
-                    val refunds = records.refunds.filter { it.transportId == t.id && !it.collected }
+                items(records.transports, key = { it.id }, contentType = { "TransportScreen-row" }) { t ->
+                    val riders = records.participantsByTransport[t.id].orEmpty()
+                    val refunds = records.refundsByTransport[t.id].orEmpty()
                     SectionCard {
                         Column(Modifier.padding(14.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {

@@ -29,11 +29,20 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-fun formatDate(millis: Long): String =
-    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(millis))
-
-fun formatDateTime(millis: Long): String =
-    SimpleDateFormat("yyyy-MM-dd  HH:mm", Locale.getDefault()).format(Date(millis))
+// Bounded, locale/timezone-aware cache. No formatter construction on a cached row.
+private object DisplayDates {
+    private val cache = object : LinkedHashMap<Triple<Long, String, String>, String>(512, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Triple<Long, String, String>, String>?) = size > 512
+    }
+    @Synchronized fun format(millis: Long, pattern: String): String {
+        val locale = Locale.getDefault()
+        val zone = java.util.TimeZone.getDefault()
+        val key = Triple(millis, pattern, locale.toLanguageTag() + zone.id)
+        return cache.getOrPut(key) { SimpleDateFormat(pattern, locale).apply { timeZone = zone }.format(Date(millis)) }
+    }
+}
+fun formatDate(millis: Long): String = DisplayDates.format(millis, "yyyy-MM-dd")
+fun formatDateTime(millis: Long): String = DisplayDates.format(millis, "yyyy-MM-dd  HH:mm")
 
 @Composable
 fun SectionCard(modifier: Modifier = Modifier, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {

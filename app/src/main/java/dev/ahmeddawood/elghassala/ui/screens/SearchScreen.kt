@@ -57,16 +57,27 @@ fun SearchScreen(vm: AppViewModel, nav: NavHostController) {
     val q = query.trim().lowercase()
     fun matches(vararg fields: String) = q.isEmpty() || fields.any { it.lowercase().contains(q) }
 
-    val dayHits = if (filter in setOf(Filter.ALL, Filter.DAYS))
+    val dayHits = remember(records, q, filter) {
+        if (filter in setOf(Filter.ALL, Filter.DAYS))
         records.days.filter { matches(it.title) } else emptyList()
-    val transportHits = if (filter in setOf(Filter.ALL, Filter.TRANSPORT))
+    }
+
+    val transportHits = remember(records, q, filter) {
+        if (filter in setOf(Filter.ALL, Filter.TRANSPORT))
         records.transports.filter { matches(it.origin, it.destination, it.notes) } else emptyList()
-    val expenseHits = if (filter in setOf(Filter.ALL, Filter.EXPENSES))
+    }
+
+    val expenseHits = remember(records, q, filter) {
+        if (filter in setOf(Filter.ALL, Filter.EXPENSES))
         records.expenses.filter { matches(it.title, it.notes) } else emptyList()
-    val transferHits = if (filter in setOf(Filter.ALL, Filter.TRANSFERS))
+    }
+
+    val transferHits = remember(records, q, filter) {
+        if (filter in setOf(Filter.ALL, Filter.TRANSFERS))
         records.transfers.filter {
             matches(records.peopleNames[it.fromPersonId] ?: "", records.peopleNames[it.toPersonId] ?: "", it.notes)
         } else emptyList()
+    }
 
     val filterLabels = listOf(
         Filter.ALL to stringResource(R.string.filter_all),
@@ -116,7 +127,7 @@ fun SearchScreen(vm: AppViewModel, nav: NavHostController) {
                 item { EmptyState(Icons.Filled.Search, stringResource(R.string.no_results)) }
             }
 
-            items(dayHits, key = { "d-${it.id}" }) { day ->
+            items(dayHits, key = { "d-${it.id}" }, contentType = { "SearchScreen-row" }) { day ->
                 SectionCard {
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.CalendarMonth, null, tint = MaterialTheme.colorScheme.primary)
@@ -132,7 +143,7 @@ fun SearchScreen(vm: AppViewModel, nav: NavHostController) {
                     }
                 }
             }
-            items(transportHits, key = { "t-${it.id}" }) { t ->
+            items(transportHits, key = { "t-${it.id}" }, contentType = { "SearchScreen-row" }) { t ->
                 SectionCard {
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.DirectionsBus, null, tint = MaterialTheme.colorScheme.primary)
@@ -145,7 +156,7 @@ fun SearchScreen(vm: AppViewModel, nav: NavHostController) {
                     }
                 }
             }
-            items(expenseHits, key = { "e-${it.id}" }) { e ->
+            items(expenseHits, key = { "e-${it.id}" }, contentType = { "SearchScreen-row" }) { e ->
                 SectionCard {
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Payments, null, tint = MaterialTheme.colorScheme.tertiary)
@@ -158,7 +169,7 @@ fun SearchScreen(vm: AppViewModel, nav: NavHostController) {
                     }
                 }
             }
-            items(transferHits, key = { "x-${it.id}" }) { x ->
+            items(transferHits, key = { "x-${it.id}" }, contentType = { "SearchScreen-row" }) { x ->
                 SectionCard {
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.SwapHoriz, null, tint = MaterialTheme.colorScheme.secondary)

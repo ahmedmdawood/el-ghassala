@@ -87,7 +87,7 @@ fun PeopleScreen(vm: AppViewModel, nav: NavHostController) {
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(records.people, key = { it.id }) { person ->
+                items(records.people, key = { it.id }, contentType = { "PeopleScreen-row" }) { person ->
                     PressScaleCard(onClick = { nav.navigate(Routes.personDetail(person.id)) }) {
                         Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                             dev.ahmeddawood.elghassala.ui.components.PersonAvatar(

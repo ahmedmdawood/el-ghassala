@@ -24,6 +24,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
+/** Small shared cache prevents decoding the same photo again each time its row re-enters view. */
+private object AvatarBitmaps {
+    private val cache = object : android.util.LruCache<String, android.graphics.Bitmap>(4 * 1024 * 1024) {
+        override fun sizeOf(key: String, value: android.graphics.Bitmap): Int = value.byteCount
+    }
+    fun load(file: File): ImageBitmap? {
+        val key = file.absolutePath
+        val bitmap = cache.get(key) ?: android.graphics.BitmapFactory.decodeFile(key)?.also { cache.put(key, it) }
+        return bitmap?.asImageBitmap()
+    }
+}
+
 private val avatarColors = listOf(
     Color(0xFF0E7C66), Color(0xFFB07E1E), Color(0xFF3E7A6A), Color(0xFFC0563E),
     Color(0xFF5B6FB5), Color(0xFF8E5BA8), Color(0xFF2F8FA3), Color(0xFF7C8B2E),
@@ -47,7 +59,7 @@ fun PersonAvatar(
         avatar != null && avatar.isPhoto && photoFile != null -> {
             val bmp by produceState<ImageBitmap?>(null, avatar.value) {
                 value = withContext(Dispatchers.IO) {
-                    runCatching { android.graphics.BitmapFactory.decodeFile(photoFile(avatar).path)?.asImageBitmap() }.getOrNull()
+                    runCatching { AvatarBitmaps.load(photoFile(avatar)) }.getOrNull()
                 }
             }
             val b = bmp

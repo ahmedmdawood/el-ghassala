@@ -70,13 +70,9 @@ fun DaysScreen(vm: AppViewModel, nav: NavHostController) {
             if (records.days.isEmpty()) {
                 item { EmptyState(Icons.Filled.CalendarMonth, stringResource(R.string.no_days_yet)) }
             }
-            items(records.days, key = { it.id }) { day ->
-                val totals = remember(records, day.id) {
-                    val ts = records.transports.filter { it.dayId == day.id }
-                        .sumOf { t -> t.fareCents * records.participants.count { it.transportId == t.id }.coerceAtLeast(1) }
-                    val es = records.expenses.filter { it.dayId == day.id }.sumOf { it.totalCents }
-                    ts + es
-                }
+            items(records.days, key = { it.id }, contentType = { "DaysScreen-row" }) { day ->
+                val totals = records.daySpendTotals[day.id] ?: 0L
+
                 Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                     PressScaleCard(onClick = { nav.navigate(Routes.dayDetail(day.id)) }) {
                         Row(

@@ -79,9 +79,9 @@ fun ExpensesScreen(vm: AppViewModel, nav: NavHostController) {
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                items(records.expenses, key = { it.id }) { e ->
-                    val payers = records.payers.filter { it.expenseId == e.id }
-                    val dayTitle = e.dayId?.let { id -> records.days.firstOrNull { it.id == id }?.title }
+                items(records.expenses, key = { it.id }, contentType = { "ExpensesScreen-row" }) { e ->
+                    val payers = records.payersByExpense[e.id].orEmpty()
+                    val dayTitle = e.dayId?.let { id -> records.daysById[id]?.title }
                     SectionCard {
                         Column(Modifier.padding(14.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {

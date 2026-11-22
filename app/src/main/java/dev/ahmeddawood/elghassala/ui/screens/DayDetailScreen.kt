@@ -66,11 +66,11 @@ fun DayDetailScreen(vm: AppViewModel, nav: NavHostController, dayId: Long) {
         return
     }
 
-    val dayTransports = records.transports.filter { it.dayId == dayId }
-    val dayExpenses = records.expenses.filter { it.dayId == dayId }
-    val dayTransfers = records.transfers.filter { it.dayId == dayId }
+    val dayTransports = records.transportsByDay[dayId].orEmpty()
+    val dayExpenses = records.expensesByDay[dayId].orEmpty()
+    val dayTransfers = records.transfersByDay[dayId].orEmpty()
     val dayLedgers = remember(records, dayId) { vm.ledgerForDay(records, dayId) }
-    val dayTotal = dayTransports.sumOf { t -> t.fareCents * records.participants.count { it.transportId == t.id }.coerceAtLeast(1) } +
+    val dayTotal = dayTransports.sumOf { t -> t.fareCents * records.participantsByTransport[t.id].orEmpty().size } +
         dayExpenses.sumOf { it.totalCents }
 
     Scaffold(
@@ -155,7 +155,7 @@ fun DayDetailScreen(vm: AppViewModel, nav: NavHostController, dayId: Long) {
                 item { EmptyState(Icons.Filled.DirectionsBus, stringResource(R.string.no_activity_yet)) }
             }
 
-            items(dayTransports, key = { "t-${it.id}" }) { t ->
+            items(dayTransports, key = { "t-${it.id}" }, contentType = { "DayDetailScreen-row" }) { t ->
                 SectionCard {
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.DirectionsBus, null, tint = MaterialTheme.colorScheme.primary)
@@ -168,7 +168,7 @@ fun DayDetailScreen(vm: AppViewModel, nav: NavHostController, dayId: Long) {
                     }
                 }
             }
-            items(dayExpenses, key = { "e-${it.id}" }) { e ->
+            items(dayExpenses, key = { "e-${it.id}" }, contentType = { "DayDetailScreen-row" }) { e ->
                 SectionCard {
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Payments, null, tint = MaterialTheme.colorScheme.tertiary)
@@ -181,7 +181,7 @@ fun DayDetailScreen(vm: AppViewModel, nav: NavHostController, dayId: Long) {
                     }
                 }
             }
-            items(dayTransfers, key = { "x-${it.id}" }) { x ->
+            items(dayTransfers, key = { "x-${it.id}" }, contentType = { "DayDetailScreen-row" }) { x ->
                 SectionCard {
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.SwapHoriz, null, tint = MaterialTheme.colorScheme.secondary)

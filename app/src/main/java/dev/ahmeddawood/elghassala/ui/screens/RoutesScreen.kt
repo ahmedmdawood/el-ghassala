@@ -88,10 +88,8 @@ fun RoutesScreen(vm: AppViewModel, nav: NavHostController) {
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                items(records.routes, key = { it.id }) { route ->
-                    val routeStars = remember(records.transports, records.participants, route.origin, route.destination) {
-                        dev.ahmeddawood.elghassala.domain.RouteStars.stars(records.rides(), route.origin, route.destination)
-                    }
+                items(records.routes, key = { it.id }, contentType = { "RoutesScreen-row" }) { route ->
+                    val routeStars = records.routeStarsById[route.id].orEmpty()
                     SectionCard {
                         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.Route, null, tint = MaterialTheme.colorScheme.primary)

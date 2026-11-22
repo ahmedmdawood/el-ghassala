@@ -95,7 +95,7 @@ fun SettlementScreen(vm: AppViewModel, nav: NavHostController) {
                 if (unsettled.isEmpty()) {
                     item { EmptyState(Icons.Filled.Handshake, stringResource(R.string.settled_up)) }
                 }
-                items(unsettled.entries.toList(), key = { it.key }) { (pid, ledger) ->
+                items(unsettled.entries.toList(), key = { it.key }, contentType = { "SettlementScreen-row" }) { (pid, ledger) ->
                     Box2 {
                         SectionCard {
                             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -123,7 +123,7 @@ fun SettlementScreen(vm: AppViewModel, nav: NavHostController) {
                 if (suggestions.isEmpty()) {
                     item { EmptyState(Icons.Filled.Handshake, stringResource(R.string.no_debts)) }
                 }
-                items(suggestions, key = { "${it.fromPersonId}-${it.toPersonId}-${it.amountCents}" }) { edge ->
+                items(suggestions, key = { "${it.fromPersonId}-${it.toPersonId}-${it.amountCents}" }, contentType = { "SettlementScreen-row" }) { edge ->
                     Box2 {
                         SectionCard {
                             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -160,7 +160,7 @@ fun SettlementScreen(vm: AppViewModel, nav: NavHostController) {
                 if (outstanding.isEmpty()) {
                     item { EmptyState(Icons.Filled.Handshake, stringResource(R.string.no_refunds)) }
                 }
-                items(outstanding, key = { it.id }) { refund ->
+                items(outstanding, key = { it.id }, contentType = { "SettlementScreen-row" }) { refund ->
                     val transport = records.transports.firstOrNull { it.id == refund.transportId }
                     Box2 {
                         SectionCard {

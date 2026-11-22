@@ -86,7 +86,7 @@ fun TransfersScreen(vm: AppViewModel, nav: NavHostController) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                items(records.transfers, key = { it.id }) { t ->
+                items(records.transfers, key = { it.id }, contentType = { "TransfersScreen-row" }) { t ->
                     SectionCard {
                         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(

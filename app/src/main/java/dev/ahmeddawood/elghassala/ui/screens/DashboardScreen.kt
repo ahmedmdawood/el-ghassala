@@ -48,6 +48,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Checkbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -88,7 +93,7 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
     val todayTransport = records.transports.filter { it.dateMillis in todayStart until todayEnd }
     val todayExpenses = records.expenses.filter { it.dateMillis in todayStart until todayEnd }
     val todaySpend = todayTransport.sumOf { t ->
-        val riders = records.participants.count { it.transportId == t.id }.coerceAtLeast(1)
+        val riders = records.participantsByTransport[t.id].orEmpty().size
         t.fareCents * riders
     } + todayExpenses.sumOf { it.totalCents }
 
@@ -103,6 +108,49 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
     val openDays = records.days.filter { !it.isClosed }
     val openDay by vm.openDay.collectAsState()
     var confirmEnd by remember { mutableStateOf(false) }
+    var showStartDay by remember { mutableStateOf(false) }
+    val openingCash by vm.openingCash.collectAsState()
+    if (showStartDay) {
+        val chosen = remember { mutableStateMapOf<Long, String>() }
+        AlertDialog(
+            onDismissRequest = { showStartDay = false },
+            title = { Text(stringResource(R.string.start_day_who_title)) },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    Text(stringResource(R.string.start_day_who_sub), style = MaterialTheme.typography.bodySmall)
+                    records.activePeople.forEach { p ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(checked = chosen.containsKey(p.id), onCheckedChange = { on ->
+                                if (on) chosen[p.id] = "" else chosen.remove(p.id)
+                            })
+                            Text(p.name, Modifier.weight(1f), maxLines = 1)
+                            if (chosen.containsKey(p.id)) {
+                                OutlinedTextField(
+                                    value = chosen[p.id] ?: "",
+                                    onValueChange = { chosen[p.id] = it },
+                                    modifier = Modifier.fillMaxWidth(0.45f),
+                                    singleLine = true,
+                                    label = { Text(stringResource(R.string.start_day_cash)) },
+                                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = chosen.values.all { v -> (Money.parse(v) ?: -1L) >= 0L }, onClick = {
+                    val opening = chosen.mapValues { (_, v) -> Money.parse(v) ?: 0L }
+                    showStartDay = false
+                    vm.startDay(opening)
+                }) { Text(stringResource(R.string.start_day_button)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStartDay = false; vm.startDay() }) { Text(stringResource(R.string.start_day_skip)) }
+            },
+        )
+    }
     if (confirmEnd) {
         AlertDialog(
             onDismissRequest = { confirmEnd = false },
@@ -173,7 +221,7 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
 
         item {
             // Money still owed TO the user: driver refunds not yet collected, and what people owe each other.
-            val pendingRefunds = records.refunds.filter { !it.collected }
+            val pendingRefunds = records.pendingRefunds
             val owedEdges = remember(netBalances) { dev.ahmeddawood.elghassala.domain.FinanceEngine.suggestSettlements(netBalances) }
             if (pendingRefunds.isNotEmpty() || owedEdges.isNotEmpty()) {
                 Column(Modifier.padding(horizontal = 16.dp)) {
@@ -182,7 +230,7 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
                         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(stringResource(R.string.owed_to_you_title), style = MaterialTheme.typography.titleMedium)
                             pendingRefunds.forEach { r ->
-                                val trip = records.transports.firstOrNull { it.id == r.transportId }
+                                val trip = records.transportsById[r.transportId]
                                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                     Column(Modifier.weight(1f)) {
                                         Text("${stringResource(R.string.driver_owes)} ${records.peopleNames[r.personId] ?: ""}")
@@ -245,7 +293,7 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
                             )
                             Spacer(Modifier.height(16.dp))
                             Button(
-                                onClick = { vm.startDay() },
+                                onClick = { showStartDay = true },
                                 modifier = Modifier.fillMaxWidth().height(54.dp).graphicsLayer { scaleX = scale; scaleY = scale },
                             ) {
                                 Text(stringResource(R.string.start_day_button), style = MaterialTheme.typography.titleMedium)
@@ -253,10 +301,8 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
                         }
                     }
                 } else {
-                    val dayTrips = records.transports.filter { it.dayId == day.id }
-                    val dayTotal = dayTrips.sumOf { t ->
-                        t.fareCents * records.participants.count { it.transportId == t.id }.coerceAtLeast(1)
-                    } + records.expenses.filter { it.dayId == day.id }.sumOf { it.totalCents }
+                    val dayTrips = records.transportsByDay[day.id].orEmpty()
+                    val dayTotal = records.daySpendTotals[day.id] ?: 0L
                     SectionCard {
                         Column(Modifier.fillMaxWidth().padding(18.dp)) {
                             Text(
@@ -270,6 +316,19 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
+                            val opening = openingCash[day.id].orEmpty()
+                            if (opening.isNotEmpty()) {
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    stringResource(R.string.opening_cash_pool, Money.shown(
+                                        dev.ahmeddawood.elghassala.settings.OpeningCashStore.pool(opening))),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                                opening.forEach { (pid, cents) ->
+                                    Text("${records.peopleNames[pid] ?: ""}: ${Money.shown(cents)}", style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
                             Spacer(Modifier.height(14.dp))
                             Button(
                                 onClick = { confirmEnd = true },
@@ -371,7 +430,7 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
                     Spacer(Modifier.height(8.dp))
                 }
             }
-            items(openDays.take(3), key = { "day-${it.id}" }) { day ->
+            items(openDays.take(3), key = { "day-${it.id}" }, contentType = { "DashboardScreen-row" }) { day ->
                 Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                     PressScaleCard(onClick = { nav.navigate(Routes.dayDetail(day.id)) }) {
                         Row(
@@ -410,11 +469,9 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
                     Spacer(Modifier.height(8.dp))
                 }
             }
-            items(closedDays.take(5), key = { "closed-${it.id}" }) { day ->
-                val trips = records.transports.filter { it.dayId == day.id }
-                val total = trips.sumOf { t ->
-                    t.fareCents * records.participants.count { it.transportId == t.id }.coerceAtLeast(1)
-                } + records.expenses.filter { it.dayId == day.id }.sumOf { it.totalCents }
+            items(closedDays.take(5), key = { "closed-${it.id}" }, contentType = { "DashboardScreen-row" }) { day ->
+                val trips = records.transportsByDay[day.id].orEmpty()
+                val total = records.daySpendTotals[day.id] ?: 0L
                 Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                     PressScaleCard(onClick = { nav.navigate(Routes.dayDetail(day.id)) }) {
                         Row(
@@ -448,7 +505,7 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
             }
         }
 
-        items(recent, key = { "${it.first}-${it.second}" }) { (kind, id, _) ->
+        items(recent, key = { "${it.first}-${it.second}" }, contentType = { "DashboardScreen-row" }) { (kind, id, _) ->
             Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                 when (kind) {
                     "t" -> {
