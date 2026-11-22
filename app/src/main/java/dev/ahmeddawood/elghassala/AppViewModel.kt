@@ -190,7 +190,20 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---- Settings ----
 
-    fun setLanguage(lang: AppLanguage) = viewModelScope.launch { settings.setLanguage(lang) }
+    /** True while the language change runs behind a washing-machine veil (fades out after the screen rebuilds). */
+    val langSwitching = MutableStateFlow(false)
+    fun setLanguage(lang: AppLanguage) = viewModelScope.launch {
+        if (lang == language.value) return@launch
+        langSwitching.value = true
+        kotlinx.coroutines.delay(420)
+        settings.setLanguage(lang)
+        kotlinx.coroutines.delay(1000)
+        langSwitching.value = false
+    }
+
+    val palette: StateFlow<dev.ahmeddawood.elghassala.ui.theme.AppPalette> = settings.palette
+        .stateIn(viewModelScope, SharingStarted.Eagerly, dev.ahmeddawood.elghassala.ui.theme.AppPalette.TEAL)
+    fun setPalette(p: dev.ahmeddawood.elghassala.ui.theme.AppPalette) = viewModelScope.launch { settings.setPalette(p) }
     fun setTheme(value: AppTheme) = viewModelScope.launch { settings.setTheme(value) }
 
     // ---- Avatars (stored outside the database) ----

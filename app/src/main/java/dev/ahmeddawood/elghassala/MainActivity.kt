@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity() {
             val vm: AppViewModel = viewModel()
             val theme by vm.theme.collectAsState()
             val language by vm.language.collectAsState()
+            val palette by vm.palette.collectAsState()
 
             // Per-app locale so Android rebuilds resources with the right
             // strings and RTL direction.
@@ -42,7 +43,7 @@ class MainActivity : AppCompatActivity() {
                 AppTheme.DARK -> true
                 AppTheme.SYSTEM -> isSystemInDarkTheme()
             }
-            ElGhassalaTheme(darkTheme = dark) {
+            ElGhassalaTheme(darkTheme = dark, palette = palette) {
                 AppNavHost(vm)
             }
         }

@@ -307,4 +307,10 @@
     <string name="avatar_or_emoji">أو اختار إيموجي</string>
     <string name="avatar_remove">شيل الصورة</string>
     <string name="avatar_failed">مقدرتش أستخدم الصورة دي.</string>
+    <string name="palette_title">الألوان</string>
+    <string name="palette_teal">اللاجون</string>
+    <string name="palette_sunset">الغروب</string>
+    <string name="palette_ocean">المحيط</string>
+    <string name="palette_rose">الوردي</string>
+    <string name="palette_midnight">منتصف الليل</string>
 </resources>

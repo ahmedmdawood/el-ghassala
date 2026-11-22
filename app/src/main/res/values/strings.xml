@@ -307,4 +307,10 @@
     <string name="avatar_or_emoji">or pick an emoji</string>
     <string name="avatar_remove">Remove</string>
     <string name="avatar_failed">Could not use that picture.</string>
+    <string name="palette_title">Colors</string>
+    <string name="palette_teal">Lagoon</string>
+    <string name="palette_sunset">Sunset</string>
+    <string name="palette_ocean">Ocean</string>
+    <string name="palette_rose">Rose</string>
+    <string name="palette_midnight">Midnight</string>
 </resources>

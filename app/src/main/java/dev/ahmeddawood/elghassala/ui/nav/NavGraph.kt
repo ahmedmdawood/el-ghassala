@@ -251,6 +251,19 @@ fun AppNavHost(vm: AppViewModel) {
     celebration?.let { CelebrationOverlay(it) { vm.dismissCelebration() } }
     val receipt by vm.receipt.collectAsState()
     receipt?.let { dev.ahmeddawood.elghassala.ui.components.ReceiptOverlay(it) { vm.dismissReceipt() } }
+    val langSwitching by vm.langSwitching.collectAsState()
+    androidx.compose.animation.AnimatedVisibility(
+        visible = langSwitching,
+        enter = fadeIn(tween(350)),
+        exit = fadeOut(tween(600)),
+    ) {
+        Box(
+            Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(0xF2062E27)),
+            contentAlignment = androidx.compose.ui.Alignment.Center,
+        ) {
+            dev.ahmeddawood.elghassala.ui.components.SpinLoader(size = 84.dp, periodMs = 900)
+        }
+    }
     val busy by vm.busy.collectAsState()
     if (busy) {
         Box(

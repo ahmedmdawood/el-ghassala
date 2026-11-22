@@ -3,6 +3,9 @@ package dev.ahmeddawood.elghassala.ui.screens
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -187,6 +190,39 @@ fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
                             selected = theme == AppTheme.DARK,
                             onClick = { vm.setTheme(AppTheme.DARK) },
                             label = { Text(stringResource(R.string.theme_dark)) },
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            val palette by vm.palette.collectAsState()
+            Column(Modifier.padding(horizontal = 16.dp)) {
+                Spacer(Modifier.height(16.dp))
+                SectionHeader(Icons.Filled.Palette, stringResource(R.string.palette_title))
+                Spacer(Modifier.height(8.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(dev.ahmeddawood.elghassala.ui.theme.AppPalette.values().toList()) { p ->
+                        val label = when (p) {
+                            dev.ahmeddawood.elghassala.ui.theme.AppPalette.TEAL -> R.string.palette_teal
+                            dev.ahmeddawood.elghassala.ui.theme.AppPalette.SUNSET -> R.string.palette_sunset
+                            dev.ahmeddawood.elghassala.ui.theme.AppPalette.OCEAN -> R.string.palette_ocean
+                            dev.ahmeddawood.elghassala.ui.theme.AppPalette.ROSE -> R.string.palette_rose
+                            dev.ahmeddawood.elghassala.ui.theme.AppPalette.MIDNIGHT -> R.string.palette_midnight
+                        }
+                        FilterChip(
+                            selected = palette == p,
+                            onClick = { vm.setPalette(p) },
+                            label = { Text(stringResource(label)) },
+                            leadingIcon = {
+                                androidx.compose.foundation.layout.Box(
+                                    Modifier.size(14.dp).background(
+                                        dev.ahmeddawood.elghassala.ui.theme.schemeFor(p, false).primary,
+                                        androidx.compose.foundation.shape.CircleShape,
+                                    )
+                                )
+                            },
                         )
                     }
                 }

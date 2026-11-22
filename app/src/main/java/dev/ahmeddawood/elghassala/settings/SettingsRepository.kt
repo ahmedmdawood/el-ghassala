@@ -21,6 +21,7 @@ class SettingsRepository(private val context: Context) {
         val funEnabled = booleanPreferencesKey("fun_enabled")
         val funFrequency = stringPreferencesKey("fun_frequency")
         val privacy = booleanPreferencesKey("privacy_mode")
+        val palette = stringPreferencesKey("palette")
         val spinSeen = booleanPreferencesKey("spin_seen")
     }
 
@@ -63,6 +64,14 @@ class SettingsRepository(private val context: Context) {
     /** Playful feedback messages: on/off and how often (often / balanced / rare). */
     val funEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.funEnabled] ?: true }
     val funFrequency: Flow<String> = context.dataStore.data.map { it[Keys.funFrequency] ?: "balanced" }
+
+    val palette: Flow<dev.ahmeddawood.elghassala.ui.theme.AppPalette> = context.dataStore.data.map {
+        runCatching { dev.ahmeddawood.elghassala.ui.theme.AppPalette.valueOf(it[Keys.palette] ?: "TEAL") }
+            .getOrDefault(dev.ahmeddawood.elghassala.ui.theme.AppPalette.TEAL)
+    }
+    suspend fun setPalette(p: dev.ahmeddawood.elghassala.ui.theme.AppPalette) {
+        context.dataStore.edit { it[Keys.palette] = p.name }
+    }
 
     fun rawFlow(): Flow<androidx.datastore.preferences.core.Preferences> = context.dataStore.data
     suspend fun editRaw(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {
