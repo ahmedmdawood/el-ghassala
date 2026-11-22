@@ -238,4 +238,18 @@
     <string name="pdf_transfers">التحويلات</string>
     <string name="pdf_generated">أُنشئ في</string>
     <string name="page">صفحة</string>
+    <string name="import_legacy">استيراد من النسخة القديمة</string>
+    <string name="import_legacy_confirm">استيراد البيانات المصدّرة من تطبيق الغسالة القديم؟ بياناتك الحالية تبقى كما هي، والأشخاص بنفس الاسم يُستخدمون كما هم.</string>
+    <string name="legacy_import_failed">تعذّر الاستيراد: هذا الملف ليس نسخة من تطبيق الغسالة القديم.</string>
+    <string name="legacy_import_done">اكتمل الاستيراد</string>
+    <string name="legacy_days">الأيام</string>
+    <string name="legacy_people_new">أشخاص أُضيفوا</string>
+    <string name="legacy_people_reused">أشخاص موجودون أُعيد استخدامهم</string>
+    <string name="legacy_routes">المسارات المحفوظة</string>
+    <string name="legacy_trips">المشاوير</string>
+    <string name="legacy_expenses">المصاريف</string>
+    <string name="legacy_transfers">التحويلات</string>
+    <string name="legacy_refunds_collected">مستحقات السائق المحصّلة</string>
+    <string name="legacy_warnings">ملاحظات</string>
+    <string name="legacy_ok">حسناً</string>
 </resources>

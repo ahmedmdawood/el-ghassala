@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.ahmeddawood.elghassala.backup.BackupManager
+import dev.ahmeddawood.elghassala.backup.LegacyImporter
 import dev.ahmeddawood.elghassala.data.db.DayEntity
 import dev.ahmeddawood.elghassala.data.db.DriverRefundEntity
 import dev.ahmeddawood.elghassala.data.db.PersonEntity
@@ -319,6 +320,19 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 ?: error("no stream")
         }.onSuccess { _events.emit(UiEvent.Message(R.string.backup_success)) }
             .onFailure { _events.emit(UiEvent.Message(R.string.restore_failed)) }
+    }
+
+    val legacyImportResult = MutableStateFlow<LegacyImporter.Result?>(null)
+    fun clearLegacyImportResult() { legacyImportResult.value = null }
+
+    fun importLegacyBackup(uri: Uri) = viewModelScope.launch {
+        runCatching {
+            val text = getApplication<Application>().contentResolver.openInputStream(uri)?.use {
+                it.readBytes().toString(Charsets.UTF_8)
+            } ?: error("no stream")
+            repo.importLegacy(text)
+        }.onSuccess { legacyImportResult.value = it }
+            .onFailure { _events.emit(UiEvent.Message(R.string.legacy_import_failed)) }
     }
 
     fun importBackup(uri: Uri) = viewModelScope.launch {

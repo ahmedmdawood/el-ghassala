@@ -238,4 +238,18 @@
     <string name="pdf_transfers">Transfers</string>
     <string name="pdf_generated">Generated</string>
     <string name="page">Page</string>
+    <string name="import_legacy">Import from old version</string>
+    <string name="import_legacy_confirm">Import data exported from the old El Ghasala app? Your current data is kept, and people whose names match are reused.</string>
+    <string name="legacy_import_failed">Could not import: this file is not an old El Ghasala export.</string>
+    <string name="legacy_import_done">Import complete</string>
+    <string name="legacy_days">Days</string>
+    <string name="legacy_people_new">People added</string>
+    <string name="legacy_people_reused">Existing people reused</string>
+    <string name="legacy_routes">Saved routes</string>
+    <string name="legacy_trips">Trips</string>
+    <string name="legacy_expenses">Expenses</string>
+    <string name="legacy_transfers">Transfers</string>
+    <string name="legacy_refunds_collected">Driver refunds marked collected</string>
+    <string name="legacy_warnings">Notes</string>
+    <string name="legacy_ok">OK</string>
 </resources>

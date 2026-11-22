@@ -48,6 +48,8 @@ fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
     val language by vm.language.collectAsState()
     val theme by vm.theme.collectAsState()
     var confirmImport by remember { mutableStateOf<android.net.Uri?>(null) }
+    var confirmLegacyImport by remember { mutableStateOf<android.net.Uri?>(null) }
+    val legacyResult by vm.legacyImportResult.collectAsState()
 
     val stamp = remember { SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date()) }
 
@@ -56,6 +58,9 @@ fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
     }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         confirmImport = uri
+    }
+    val legacyImportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        confirmLegacyImport = uri
     }
     val exportCsvLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
         uri?.let { vm.exportCsv(it) }
@@ -153,6 +158,9 @@ fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
                         TextButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/*", "*/*")) }, modifier = Modifier.fillMaxWidth()) {
                             Text(stringResource(R.string.import_backup))
                         }
+                        TextButton(onClick = { legacyImportLauncher.launch(arrayOf("application/json", "text/*", "*/*")) }, modifier = Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.import_legacy))
+                        }
                     }
                 }
             }
@@ -206,6 +214,42 @@ fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
             text = stringResource(R.string.import_confirm),
             onConfirm = { vm.importBackup(uri) },
             onDismiss = { confirmImport = null },
+        )
+    }
+
+    confirmLegacyImport?.let { uri ->
+        ConfirmDialog(
+            title = stringResource(R.string.import_legacy),
+            text = stringResource(R.string.import_legacy_confirm),
+            onConfirm = { vm.importLegacyBackup(uri); confirmLegacyImport = null },
+            onDismiss = { confirmLegacyImport = null },
+        )
+    }
+
+    legacyResult?.let { r ->
+        AlertDialog(
+            onDismissRequest = { vm.clearLegacyImportResult() },
+            confirmButton = {
+                TextButton(onClick = { vm.clearLegacyImportResult() }) { Text(stringResource(R.string.legacy_ok)) }
+            },
+            title = { Text(stringResource(R.string.legacy_import_done)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("${stringResource(R.string.legacy_days)}: ${r.daysAdded}")
+                    Text("${stringResource(R.string.legacy_people_new)}: ${r.peopleAdded}")
+                    Text("${stringResource(R.string.legacy_people_reused)}: ${r.peopleReused}")
+                    Text("${stringResource(R.string.legacy_routes)}: ${r.routesAdded}")
+                    Text("${stringResource(R.string.legacy_trips)}: ${r.transportsAdded}")
+                    Text("${stringResource(R.string.legacy_expenses)}: ${r.expensesAdded}")
+                    Text("${stringResource(R.string.legacy_transfers)}: ${r.transfersAdded}")
+                    Text("${stringResource(R.string.legacy_refunds_collected)}: ${r.refundsMarkedCollected}")
+                    if (r.warnings.isNotEmpty()) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(stringResource(R.string.legacy_warnings), style = MaterialTheme.typography.titleSmall)
+                        r.warnings.forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+                    }
+                }
+            },
         )
     }
 }

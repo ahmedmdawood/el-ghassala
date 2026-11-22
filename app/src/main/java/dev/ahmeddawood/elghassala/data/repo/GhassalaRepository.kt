@@ -344,4 +344,180 @@ class GhassalaRepository(private val db: AppDatabase) {
         if (data.expenseBeneficiaries.isNotEmpty()) expenses.insertBeneficiaries(data.expenseBeneficiaries)
         data.transfers.forEach { transfers.insert(it) }
     }
+
+    // ---- Legacy import (old "El Ghasala" v1 exports) ----
+
+    /**
+     * Imports an old-app export into the CURRENT data without wiping it.
+     * People are matched by exact name and reused; everything else is added
+     * fresh inside one transaction. Old amounts (EGP) become piasters.
+     * Driver refunds are recomputed with FinanceEngine (same semantics the
+     * old app used) and then reconciled with the old refund rows so
+     * collected state survives.
+     */
+    suspend fun importLegacy(json: String): dev.ahmeddawood.elghassala.backup.LegacyImporter.Result = db.withTransaction {
+        val legacy = dev.ahmeddawood.elghassala.backup.LegacyImporter.parse(json)
+        val warnings = mutableListOf<String>()
+        val now = System.currentTimeMillis()
+        val dayFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+
+        // People: reuse exact-name matches, create the rest in first-seen order.
+        val existing = people.all().associateBy { it.name }
+        val personIds = LinkedHashMap<String, Long>()
+        var peopleAdded = 0
+        var peopleReused = 0
+        val legacyCreated = legacy.people.associate { it.displayName to (it.createdAt ?: now) }
+        legacy.allNames.forEach { name ->
+            val match = existing[name]
+            if (match != null) {
+                personIds[name] = match.id
+                peopleReused++
+            } else {
+                personIds[name] = people.insert(PersonEntity(name = name, createdAt = legacyCreated[name] ?: now))
+                peopleAdded++
+            }
+        }
+
+        // Days.
+        val dayIds = HashMap<Long, Long>()
+        legacy.days.forEach { d ->
+            val dateMillis = d.date?.let {
+                runCatching { dayFormat.parse(it)?.time }.getOrNull()
+            } ?: d.createdAt
+            dayIds[d.id] = days.insert(
+                DayEntity(title = d.title, dateMillis = dateMillis, isClosed = d.isClosed, createdAt = d.createdAt)
+            )
+        }
+
+        // Saved routes.
+        legacy.routes.forEach { r ->
+            routes.insert(
+                RouteEntity(
+                    name = r.title.ifBlank { "${r.origin} → ${r.destination}" },
+                    origin = r.origin, destination = r.destination,
+                    defaultFareCents = (r.defaultFare * 100).toLong(),
+                    usageCount = r.usageCount, createdAt = r.createdAt, updatedAt = r.updatedAt,
+                )
+            )
+        }
+
+        // Transports (+ participants + recomputed refunds).
+        val transportIds = HashMap<Long, Long>()
+        legacy.transports.forEach { t ->
+            if (t.participants.isEmpty()) {
+                warnings += "transport ${t.id} skipped: no participants"
+                return@forEach
+            }
+            val trimmedPayments = t.payerPayments.mapKeys { (n, _) -> n.trim() }
+            val paid = LinkedHashMap<Long, Long>()
+            t.participants.forEach { name ->
+                personIds[name.trim()]?.let { pid ->
+                    paid[pid] = ((trimmedPayments[name.trim()] ?: 0.0) * 100).toLong()
+                }
+            }
+            if (paid.isEmpty()) {
+                warnings += "transport ${t.id} skipped: unknown participants"
+                return@forEach
+            }
+            val newId = transports.insert(
+                TransportEntity(
+                    dayId = t.dayId?.let { dayIds[it] },
+                    origin = t.origin, destination = t.destination,
+                    fareCents = (t.farePerPerson * 100).toLong(),
+                    dateMillis = t.timestamp, notes = t.notes.trim(),
+                )
+            )
+            transportIds[t.id] = newId
+            transports.insertParticipants(
+                paid.map { (pid, cents) -> TransportParticipantEntity(transportId = newId, personId = pid, paidCents = cents) }
+            )
+            val computation = dev.ahmeddawood.elghassala.domain.FinanceEngine.computeTransport(
+                (t.farePerPerson * 100).toLong(), paid
+            )
+            if (computation.driverRefunds.isNotEmpty()) {
+                refunds.insertAll(
+                    computation.driverRefunds.map { (pid, amount) ->
+                        DriverRefundEntity(transportId = newId, personId = pid, amountCents = amount, collected = false, createdAt = t.timestamp)
+                    }
+                )
+            }
+        }
+
+        // Reconcile collected state from the old refund rows.
+        var markedCollected = 0
+        legacy.refunds.forEach { r ->
+            val newTransport = transportIds[r.transactionId]
+            val pid = personIds[r.participantName]
+            if (newTransport == null || pid == null) {
+                warnings += "refund ${r.transactionId}/${r.participantName}: no matching transport or person"
+                return@forEach
+            }
+            if (!r.isCollected) return@forEach
+            val amountCents = (r.amount * 100).toLong()
+            val rows = refunds.forTransport(newTransport).filter { it.personId == pid && !it.collected }
+            val match = rows.firstOrNull { it.amountCents == amountCents } ?: rows.firstOrNull()
+            if (match == null) {
+                warnings += "collected refund for ${r.participantName} on transport ${r.transactionId}: no matching row ($amountCents)"
+            } else {
+                refunds.update(match.copy(collected = true, collectedAt = r.collectedAt ?: now))
+                markedCollected++
+            }
+        }
+
+        // Expenses.
+        var expensesAdded = 0
+        legacy.expenses.forEach { e ->
+            val shares = e.beneficiaryShares.mapNotNull { (n, v) -> personIds[n.trim()]?.let { it to (v * 100).toLong() } }.toMap()
+            val payers = e.payerPayments.mapNotNull { (n, v) -> personIds[n.trim()]?.let { it to (v * 100).toLong() } }.toMap()
+            if (shares.isEmpty() && payers.isEmpty()) {
+                warnings += "expense ${e.id} skipped: no known people"
+                return@forEach
+            }
+            val total = if (shares.isNotEmpty()) shares.values.sum() else payers.values.sum()
+            val title = e.title.ifBlank { e.notes.ifBlank { e.category.ifBlank { "Expense" } } }
+            val newId = expenses.insert(
+                ExpenseEntity(
+                    dayId = e.dayId?.let { dayIds[it] }, title = title, totalCents = total,
+                    dateMillis = e.timestamp, notes = e.notes.trim(),
+                )
+            )
+            if (payers.isNotEmpty()) expenses.insertPayers(payers.map { (pid, c) -> ExpensePayerEntity(expenseId = newId, personId = pid, paidCents = c) })
+            if (shares.isNotEmpty()) expenses.insertBeneficiaries(shares.map { (pid, c) -> ExpenseBeneficiaryEntity(expenseId = newId, personId = pid, shareCents = c) })
+            expensesAdded++
+        }
+
+        // Transfers.
+        var transfersAdded = 0
+        legacy.transfers.forEach { t ->
+            val from = personIds[t.from]
+            val to = personIds[t.to]
+            if (from == null || to == null || from == to || t.amount <= 0.0) {
+                warnings += "transfer ${t.id} skipped"
+                return@forEach
+            }
+            val isSettlement = t.notes.contains("Settlement", ignoreCase = true) || t.notes.contains("تصفية")
+            transfers.insert(
+                TransferEntity(
+                    dayId = t.dayId?.let { dayIds[it] },
+                    fromPersonId = from, toPersonId = to,
+                    amountCents = (t.amount * 100).toLong(),
+                    kind = if (isSettlement) TransferKind.SETTLEMENT else TransferKind.TRANSFER,
+                    dateMillis = t.timestamp, notes = t.notes.trim(),
+                )
+            )
+            transfersAdded++
+        }
+
+        dev.ahmeddawood.elghassala.backup.LegacyImporter.Result(
+            daysAdded = dayIds.size,
+            peopleAdded = peopleAdded,
+            peopleReused = peopleReused,
+            routesAdded = legacy.routes.size,
+            transportsAdded = transportIds.size,
+            expensesAdded = expensesAdded,
+            transfersAdded = transfersAdded,
+            refundsMarkedCollected = markedCollected,
+            warnings = warnings,
+        )
+    }
 }
