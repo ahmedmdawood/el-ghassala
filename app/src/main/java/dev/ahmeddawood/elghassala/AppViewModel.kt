@@ -293,7 +293,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             try { repo.saveDay(null, title, cal.timeInMillis); break }
             catch (e: DuplicateNameException) { title = "$base ($n)"; n++ }
         }
-        feedback("day_start", R.string.day_started, always = true)
+        feedback(
+            dev.ahmeddawood.elghassala.playful.JokeBuckets.dayStartBucket(
+                dev.ahmeddawood.elghassala.playful.JokeBuckets.hourOf(System.currentTimeMillis())),
+            R.string.day_started, always = true)
     }
 
     fun endDay() = viewModelScope.launch {
@@ -305,7 +308,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
         val expenseTotal = rec.expenses.filter { it.dayId == day.id }.sumOf { it.totalCents }
         repo.setDayClosed(day.id, true)
-        val message = (if (funEnabled.value) jokes.pick("day_close") else null)
+        val message = (if (funEnabled.value) jokes.pick(dev.ahmeddawood.elghassala.playful.JokeBuckets.dayCloseBucket(dev.ahmeddawood.elghassala.playful.JokeBuckets.hourOf(System.currentTimeMillis()))) else null)
             ?: getApplication<Application>().getString(R.string.day_celebration_title)
         celebration.value = DayCelebration(day.title, dayTransports.size, transportTotal + expenseTotal, message)
 
@@ -416,6 +419,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                         dev.ahmeddawood.elghassala.playful.JokeBuckets.tripCandidates(
                             input.paid.size, input.fareCents,
                             dev.ahmeddawood.elghassala.playful.JokeBuckets.hourOf(input.dateMillis),
+                            dev.ahmeddawood.elghassala.playful.JokeBuckets.dayOfWeekOf(input.dateMillis),
                         ).random()
                     feedback(bucket, R.string.transport_saved)
                 }
@@ -445,7 +449,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         runCatching { repo.saveExpense(id, input) }
             .onSuccess {
                 feedback(
-                    dev.ahmeddawood.elghassala.playful.JokeBuckets.expenseCandidates(input.title).random(),
+                    dev.ahmeddawood.elghassala.playful.JokeBuckets.expenseCandidates(input.title, input.totalCents).random(),
                     R.string.saved_successfully,
                 )
             }
@@ -482,7 +486,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                     "vodafone" in n || "فودافون" in n -> "transfer_vodafone"
                     else -> "transfer_cash"
                 }
-                feedback(bucket, if (kind == TransferKind.SETTLEMENT) R.string.settlement_recorded else R.string.saved_successfully)
+                feedback(if (kind == TransferKind.SETTLEMENT) bucket else dev.ahmeddawood.elghassala.playful.JokeBuckets.transferBucket(bucket, amountCents), if (kind == TransferKind.SETTLEMENT) R.string.settlement_recorded else R.string.saved_successfully)
             }
             .onFailure { _events.emit(UiEvent.Message(R.string.error_required)) }
     }

@@ -11,7 +11,10 @@ class JokeBucketsTest {
 
     @Test
     fun trip_genericAlwaysPresent() {
-        assertEquals(listOf("trip_added"), JokeBuckets.tripCandidates(3, 2000, 14))
+        assertEquals(listOf("trip_added", "trip_mid_group"), JokeBuckets.tripCandidates(3, 2000, 14))
+        assertTrue("trip_pair" in JokeBuckets.tripCandidates(2, 2000, 14))
+        assertTrue("trip_weekend" in JokeBuckets.tripCandidates(2, 2000, 14, java.util.Calendar.FRIDAY))
+        assertFalse("trip_weekend" in JokeBuckets.tripCandidates(2, 2000, 14, java.util.Calendar.MONDAY))
     }
 
     @Test
@@ -30,7 +33,19 @@ class JokeBucketsTest {
     fun expense_byTitle() {
         assertTrue("expense_coffee" in JokeBuckets.expenseCandidates("قهوة الصبح"))
         assertTrue("expense_food" in JokeBuckets.expenseCandidates("غدا كشري"))
-        assertEquals(listOf("expense_added"), JokeBuckets.expenseCandidates("تذكرة"))
+        assertEquals(listOf("expense_added"), JokeBuckets.expenseCandidates("حاجة"))
+        assertTrue("expense_transport" in JokeBuckets.expenseCandidates("تذكرة"))
+        assertTrue("expense_shopping" in JokeBuckets.expenseCandidates("مول"))
+        assertTrue("expense_big" in JokeBuckets.expenseCandidates("حاجة", 60000))
+        assertTrue("expense_small" in JokeBuckets.expenseCandidates("حاجة", 1500))
+        assertEquals("day_start_morning", JokeBuckets.dayStartBucket(8))
+        assertEquals("day_start_evening", JokeBuckets.dayStartBucket(20))
+        assertEquals("day_start", JokeBuckets.dayStartBucket(14))
+        assertEquals("day_close_late", JokeBuckets.dayCloseBucket(1))
+        assertEquals("day_close", JokeBuckets.dayCloseBucket(18))
+        assertEquals("transfer_big", JokeBuckets.transferBucket("transfer_cash", 150000))
+        assertEquals("transfer_small", JokeBuckets.transferBucket("transfer_cash", 2000))
+        assertEquals("transfer_cash", JokeBuckets.transferBucket("transfer_cash", 10000))
     }
 
     /** Every bucket file must be valid JSON, unique across the whole corpus, free of em dashes, and every bucket the code can pick must exist. */
@@ -56,7 +71,7 @@ class JokeBucketsTest {
         println("jokes total = $total")
         val names = files.map { it.name.removeSuffix(".json") }.toSet()
         listOf("trip_added", "trip_early", "trip_late", "trip_big_group", "trip_solo", "trip_high_fare", "trip_cheap",
-            "expense_added", "expense_food", "expense_coffee", "trip_one_payer", "day_start", "day_close", "receipt", "spin")
+            "expense_added", "expense_food", "expense_coffee", "expense_transport", "expense_shopping", "expense_big", "expense_small", "trip_pair", "trip_mid_group", "trip_weekend", "transfer_big", "transfer_small", "day_start_morning", "day_start_evening", "day_close_late", "trip_one_payer", "day_start", "day_close", "receipt", "spin")
             .forEach { assertTrue("missing bucket $it", it in names) }
     }
 }
