@@ -380,12 +380,17 @@ class GhassalaRepository(private val db: AppDatabase) {
 
         // Days.
         val dayIds = HashMap<Long, Long>()
+        val usedTitles = days.all().map { it.title.lowercase() }.toMutableSet()
         legacy.days.forEach { d ->
             val dateMillis = d.date?.let {
                 runCatching { dayFormat.parse(it)?.time }.getOrNull()
             } ?: d.createdAt
+            var title = d.title.ifBlank { d.date ?: "day ${d.id}" }
+            var n = 2
+            val base = title
+            while (!usedTitles.add(title.lowercase())) { title = "$base ($n)"; n++ }
             dayIds[d.id] = days.insert(
-                DayEntity(title = d.title, dateMillis = dateMillis, isClosed = d.isClosed, createdAt = d.createdAt)
+                DayEntity(title = title, dateMillis = dateMillis, isClosed = d.isClosed, createdAt = d.createdAt)
             )
         }
 

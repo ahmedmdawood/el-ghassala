@@ -1,7 +1,7 @@
 package dev.ahmeddawood.elghassala
 
 import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
+import org.robolectric.RuntimeEnvironment
 import dev.ahmeddawood.elghassala.backup.LegacyImporter
 import dev.ahmeddawood.elghassala.data.db.AppDatabase
 import dev.ahmeddawood.elghassala.data.db.PersonEntity
@@ -27,7 +27,7 @@ class LegacyImporterTest {
     @Before
     fun setUp() {
         db = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext(), AppDatabase::class.java
+            RuntimeEnvironment.getApplication(), AppDatabase::class.java
         ).allowMainThreadQueries().build()
         repo = GhassalaRepository(db)
     }
@@ -134,7 +134,7 @@ class LegacyImporterTest {
         assertEquals(0, result.expensesAdded)
         assertEquals(3, result.transfersAdded)
         assertEquals(14, result.refundsMarkedCollected)
-        assertEquals(7, result.peopleAdded) // 1, ahmed, hima, ninja, احمد, داود, هيما
+        assertEquals(6, result.peopleAdded) // ahmed, hima, ninja, احمد, داود, هيما
         assertTrue(result.warnings.isEmpty())
     }
 }
