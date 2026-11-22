@@ -81,6 +81,7 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
     val records by vm.records.collectAsState()
     val ledgers by vm.ledgers.collectAsState()
     val avatars by vm.avatars.collectAsState()
+    val owedEdges by vm.receivableEdges.collectAsState()
 
     val todayStart = remember {
         Calendar.getInstance().apply {
@@ -219,45 +220,41 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
             }
         }
 
-        item {
-            // Money still owed TO the user: driver refunds not yet collected, and what people owe each other.
-            val pendingRefunds = records.pendingRefunds
-            val owedEdges = remember(netBalances) { dev.ahmeddawood.elghassala.domain.FinanceEngine.suggestSettlements(netBalances) }
-            if (pendingRefunds.isNotEmpty() || owedEdges.isNotEmpty()) {
-                Column(Modifier.padding(horizontal = 16.dp)) {
-                    Spacer(Modifier.height(16.dp))
-                    SectionCard {
-                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(stringResource(R.string.owed_to_you_title), style = MaterialTheme.typography.titleMedium)
-                            pendingRefunds.forEach { r ->
-                                val trip = records.transportsById[r.transportId]
-                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                    Column(Modifier.weight(1f)) {
-                                        Text("${stringResource(R.string.driver_owes)} ${records.peopleNames[r.personId] ?: ""}")
-                                        if (trip != null) Text("${trip.origin} ${arrow()} ${trip.destination}", style = MaterialTheme.typography.bodySmall)
-                                        Text(Money.shown(r.amountCents), color = MaterialTheme.colorScheme.tertiary)
-                                    }
-                                    TextButton(onClick = { vm.setRefundCollected(r.id, true) }) {
-                                        Text(stringResource(R.string.mark_received))
-                                    }
-                                }
-                            }
-                            owedEdges.forEach { e ->
-                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                    Column(Modifier.weight(1f)) {
-                                        Text("${records.peopleNames[e.fromPersonId] ?: ""} ${arrow()} ${records.peopleNames[e.toPersonId] ?: ""}")
-                                        Text(Money.shown(e.amountCents), color = MaterialTheme.colorScheme.tertiary)
-                                    }
-                                    TextButton(onClick = {
-                                        vm.saveTransfer(
-                                            null, null, e.fromPersonId, e.toPersonId, e.amountCents,
-                                            dev.ahmeddawood.elghassala.data.db.TransferKind.SETTLEMENT,
-                                            System.currentTimeMillis(), "",
-                                        )
-                                    }) { Text(stringResource(R.string.mark_received)) }
-                                }
-                            }
+        if (records.pendingRefunds.isNotEmpty() || owedEdges.isNotEmpty()) {
+            item(key = "receivables-heading", contentType = "heading") {
+                Text(stringResource(R.string.owed_to_you_title),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    style = MaterialTheme.typography.titleMedium)
+            }
+            items(records.pendingRefunds, key = { "refund-${it.id}" }, contentType = { "refund" }) { r ->
+                val trip = records.transportsById[r.transportId]
+                SectionCard(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                    Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("${stringResource(R.string.driver_owes)} ${records.peopleNames[r.personId] ?: ""}")
+                            if (trip != null) Text("${trip.origin} ${arrow()} ${trip.destination}", style = MaterialTheme.typography.bodySmall)
+                            Text(Money.shown(r.amountCents), color = MaterialTheme.colorScheme.tertiary)
                         }
+                        TextButton(onClick = { vm.setRefundCollected(r.id, true) }) {
+                            Text(stringResource(R.string.mark_received))
+                        }
+                    }
+                }
+            }
+            items(owedEdges, key = { "owed-${it.fromPersonId}-${it.toPersonId}" }, contentType = { "receivable" }) { e ->
+                var receiving by remember(e) { mutableStateOf(false) }
+                SectionCard(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                    Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("${records.peopleNames[e.fromPersonId] ?: ""} ${arrow()} ${records.peopleNames[e.toPersonId] ?: ""}")
+                            Text(Money.shown(e.amountCents), color = MaterialTheme.colorScheme.tertiary)
+                        }
+                        TextButton(enabled = !receiving, onClick = {
+                            receiving = true
+                            vm.saveTransfer(null, null, e.fromPersonId, e.toPersonId, e.amountCents,
+                                dev.ahmeddawood.elghassala.data.db.TransferKind.SETTLEMENT,
+                                System.currentTimeMillis(), "")
+                        }) { Text(stringResource(R.string.mark_received)) }
                     }
                 }
             }

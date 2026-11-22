@@ -17,5 +17,11 @@ class RecordIndexesTest {
         assertSame(trip, records.transportsById[9])
         assertEquals(1, records.transportsByDay.getValue(2).size)
         assertSame(records.participantsByTransport, records.participantsByTransport)
+        val closed = records.copy(days = listOf(DayEntity(id = 2, title = "Closed", dateMillis = 0, isClosed = true, createdAt = 0)))
+        assertEquals(200L, closed.allReceivableEdges().single().amountCents)
+        val received = closed.copy(transfers = listOf(TransferEntity(id = 1, dayId = null,
+            fromPersonId = 2, toPersonId = 1, amountCents = 200, kind = TransferKind.SETTLEMENT,
+            dateMillis = 1, notes = "")))
+        assertTrue(received.allReceivableEdges().isEmpty())
     }
 }

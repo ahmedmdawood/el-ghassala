@@ -134,6 +134,11 @@ data class Records(
     /** Every past trip as a route + riders list, for route stars (نجم المشوار). */
     fun rides(): List<dev.ahmeddawood.elghassala.domain.RouteStars.Ride> = cachedRides
 
+    fun allReceivableEdges(): List<dev.ahmeddawood.elghassala.domain.DebtEdge> {
+        val all = BalanceCalculator.ledgers(transportRecords(), expenseRecords(), transferRecords(), refundRecords(), { true })
+        return FinanceEngine.suggestSettlements(BalanceCalculator.netBalances(all))
+    }
+
     /** Per-transport grand total (fare x riders). */
     val transportTotals: Map<Long, Long> by lazy {
         transports.associate { it.id to it.fareCents * participantsByTransport[it.id].orEmpty().size }
@@ -188,6 +193,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val netBalances: StateFlow<Map<Long, Long>> = ledgers
         .map { BalanceCalculator.netBalances(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    /** Home reminders stay visible after closing a day, until payment is received. */
+    val receivableEdges: StateFlow<List<dev.ahmeddawood.elghassala.domain.DebtEdge>> = records.map { rec ->
+        rec.allReceivableEdges()
+    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val suggestedSettlements: StateFlow<List<dev.ahmeddawood.elghassala.domain.DebtEdge>> = netBalances
         .map { FinanceEngine.suggestSettlements(it) }
