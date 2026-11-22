@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Savings
@@ -73,6 +74,7 @@ import java.util.Locale
 fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
     val records by vm.records.collectAsState()
     val ledgers by vm.ledgers.collectAsState()
+    val avatars by vm.avatars.collectAsState()
 
     val todayStart = remember {
         Calendar.getInstance().apply {
@@ -292,7 +294,13 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             netBalances.entries.take(4).forEach { (pid, net) ->
                                 RowSpaceBetween {
-                                    Text(records.peopleNames[pid] ?: "#$pid")
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        dev.ahmeddawood.elghassala.ui.components.PersonAvatar(
+                                            records.peopleNames[pid] ?: "?", avatars[pid], { vm.avatarPhotoFile(it) }, size = 30.dp,
+                                        )
+                                        Spacer(Modifier.size(10.dp))
+                                        Text(records.peopleNames[pid] ?: "#$pid")
+                                    }
                                     BalanceText(net)
                                 }
                             }
@@ -339,6 +347,45 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
                                 color = MaterialTheme.colorScheme.primary,
                                 style = MaterialTheme.typography.bodyMedium,
                             )
+                        }
+                    }
+                }
+            }
+        }
+
+        val closedDays = records.days.filter { it.isClosed }.sortedWith(compareByDescending<dev.ahmeddawood.elghassala.data.db.DayEntity> { it.dateMillis }.thenByDescending { it.id })
+        if (closedDays.isNotEmpty()) {
+            item {
+                Column(Modifier.padding(horizontal = 16.dp)) {
+                    Spacer(Modifier.height(18.dp))
+                    RowSpaceBetween {
+                        SectionHeader(Icons.Filled.History, stringResource(R.string.history_title))
+                        TextButton(onClick = { nav.navigate(Routes.DAYS) }) { Text(stringResource(R.string.view_all)) }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+            }
+            items(closedDays.take(5), key = { "closed-${it.id}" }) { day ->
+                val trips = records.transports.filter { it.dayId == day.id }
+                val total = trips.sumOf { t ->
+                    t.fareCents * records.participants.count { it.transportId == t.id }.coerceAtLeast(1)
+                } + records.expenses.filter { it.dayId == day.id }.sumOf { it.totalCents }
+                Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                    PressScaleCard(onClick = { nav.navigate(Routes.dayDetail(day.id)) }) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(day.title, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+                                Text(
+                                    "${formatDate(day.dateMillis)}  •  ${stringResource(R.string.celebration_trips, trips.size)}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            Text(Money.shown(total), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }

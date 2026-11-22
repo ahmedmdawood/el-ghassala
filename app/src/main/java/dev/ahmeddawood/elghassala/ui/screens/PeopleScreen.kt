@@ -1,5 +1,6 @@
 package dev.ahmeddawood.elghassala.ui.screens
 
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,6 +54,7 @@ import dev.ahmeddawood.elghassala.ui.nav.Routes
 fun PeopleScreen(vm: AppViewModel, nav: NavHostController) {
     val records by vm.records.collectAsState()
     val ledgers by vm.ledgers.collectAsState()
+    val avatars by vm.avatars.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var confirmArchive by remember { mutableStateOf<dev.ahmeddawood.elghassala.data.db.PersonEntity?>(null) }
 
@@ -88,9 +90,9 @@ fun PeopleScreen(vm: AppViewModel, nav: NavHostController) {
                 items(records.people, key = { it.id }) { person ->
                     PressScaleCard(onClick = { nav.navigate(Routes.personDetail(person.id)) }) {
                         Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Filled.Person, null,
-                                tint = if (person.archived) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
+                            dev.ahmeddawood.elghassala.ui.components.PersonAvatar(
+                                person.name, avatars[person.id], { vm.avatarPhotoFile(it) }, size = 42.dp,
+                                modifier = Modifier.graphicsLayer { alpha = if (person.archived) 0.5f else 1f },
                             )
                             Spacer(Modifier.size(10.dp))
                             Column(Modifier.weight(1f)) {

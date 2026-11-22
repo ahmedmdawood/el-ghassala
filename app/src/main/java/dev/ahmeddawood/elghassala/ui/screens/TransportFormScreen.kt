@@ -53,7 +53,7 @@ import dev.ahmeddawood.elghassala.ui.components.PressScaleButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TransportFormScreen(vm: AppViewModel, nav: NavHostController, dayId: Long?, editId: Long?) {
+fun TransportFormScreen(vm: AppViewModel, nav: NavHostController, dayId: Long?, editId: Long?, routeId: Long? = null) {
     val records by vm.records.collectAsState()
     val people = records.activePeople
 
@@ -81,6 +81,17 @@ fun TransportFormScreen(vm: AppViewModel, nav: NavHostController, dayId: Long?, 
             selected = parts.map { it.personId }.toSet()
             paidAmounts = parts.associate { it.personId to Money.format(it.paidCents) }
             loaded = true
+        }
+    }
+
+    // Opened from a saved route: prefill it once.
+    var routeApplied by remember { mutableStateOf(routeId == null || editId != null) }
+    LaunchedEffect(routeId, records.routes) {
+        if (!routeApplied && routeId != null) {
+            val r = records.routes.firstOrNull { it.id == routeId } ?: return@LaunchedEffect
+            pickedRoute = r; origin = r.origin; destination = r.destination
+            fare = Money.format(r.defaultFareCents)
+            routeApplied = true
         }
     }
 

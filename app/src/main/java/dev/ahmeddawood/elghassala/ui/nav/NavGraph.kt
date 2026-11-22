@@ -77,7 +77,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val DAY_DETAIL = "day/{dayId}"
     const val TRANSPORT = "transport"
-    const val TRANSPORT_FORM = "transportForm?dayId={dayId}&editId={editId}"
+    const val TRANSPORT_FORM = "transportForm?dayId={dayId}&editId={editId}&routeId={routeId}"
     const val EXPENSES = "expenses"
     const val EXPENSE_FORM = "expenseForm?dayId={dayId}&editId={editId}"
     const val TRANSFERS = "transfers"
@@ -89,8 +89,8 @@ object Routes {
     const val SPIN = "spin"
 
     fun dayDetail(id: Long) = "day/$id"
-    fun transportForm(dayId: Long? = null, editId: Long? = null) =
-        "transportForm?dayId=${dayId ?: -1}&editId=${editId ?: -1}"
+    fun transportForm(dayId: Long? = null, editId: Long? = null, routeId: Long? = null) =
+        "transportForm?dayId=${dayId ?: -1}&editId=${editId ?: -1}&routeId=${routeId ?: -1}"
     fun expenseForm(dayId: Long? = null, editId: Long? = null) =
         "expenseForm?dayId=${dayId ?: -1}&editId=${editId ?: -1}"
     fun transferForm(dayId: Long? = null, editId: Long? = null, settlement: Boolean = false, from: Long = -1, to: Long = -1, amount: Long = -1) =
@@ -183,12 +183,14 @@ fun AppNavHost(vm: AppViewModel) {
                 arguments = listOf(
                     navArgument("dayId") { type = NavType.LongType; defaultValue = -1L },
                     navArgument("editId") { type = NavType.LongType; defaultValue = -1L },
+                    navArgument("routeId") { type = NavType.LongType; defaultValue = -1L },
                 ),
             ) {
                 TransportFormScreen(
                     vm, nav,
                     dayId = it.arguments?.getLong("dayId")?.takeIf { d -> d != -1L },
                     editId = it.arguments?.getLong("editId")?.takeIf { d -> d != -1L },
+                    routeId = it.arguments?.getLong("routeId")?.takeIf { d -> d != -1L },
                 )
             }
             composable(Routes.EXPENSES) { ExpensesScreen(vm, nav) }

@@ -3,6 +3,7 @@ package dev.ahmeddawood.elghassala.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -60,6 +61,20 @@ fun PersonDetailScreen(vm: AppViewModel, nav: NavHostController, personId: Long)
         return
     }
 
+    val avatars by vm.avatars.collectAsState()
+    var showAvatarPicker by remember { mutableStateOf(false) }
+    val photoPicker = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri -> uri?.let { vm.setAvatarPhoto(personId, it) } }
+    if (showAvatarPicker) {
+        AvatarPickerDialog(
+            onPhoto = { showAvatarPicker = false; photoPicker.launch("image/*") },
+            onEmoji = { vm.setAvatarEmoji(personId, it); showAvatarPicker = false },
+            onClear = { vm.clearAvatar(personId); showAvatarPicker = false },
+            onDismiss = { showAvatarPicker = false },
+        )
+    }
+
     val ledger = ledgers[personId]
     val myTransports = records.participants.filter { it.personId == personId }
         .mapNotNull { p -> records.transports.firstOrNull { it.id == p.transportId }?.let { p to it } }
@@ -91,6 +106,27 @@ fun PersonDetailScreen(vm: AppViewModel, nav: NavHostController, personId: Long)
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            item {
+                SectionCard {
+                    Row(
+                        Modifier.fillMaxWidth().padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        dev.ahmeddawood.elghassala.ui.components.PersonAvatar(
+                            person.name, avatars[personId], { vm.avatarPhotoFile(it) }, size = 72.dp,
+                            modifier = Modifier.clickable { showAvatarPicker = true },
+                        )
+                        Spacer(Modifier.size(14.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(person.name, style = MaterialTheme.typography.titleLarge)
+                            TextButton(onClick = { showAvatarPicker = true }, contentPadding = PaddingValues(0.dp)) {
+                                Text(stringResource(R.string.avatar_change))
+                            }
+                        }
+                    }
+                }
+            }
+
             item {
                 SectionCard {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -202,4 +238,40 @@ fun PersonDetailScreen(vm: AppViewModel, nav: NavHostController, personId: Long)
             dismissButton = { TextButton(onClick = { showRename = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
+}
+
+
+private val emojiChoices = listOf(
+    "😀","😎","🤓","🥳","😴","🤠","🦁","🐯","🦊","🐼","🐸","🦄",
+    "🐧","🦉","🐙","🐢","🚗","🚌","🚀","⚽","🎧","🍕","☕","🌟",
+)
+
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun AvatarPickerDialog(onPhoto: () -> Unit, onEmoji: (String) -> Unit, onClear: () -> Unit, onDismiss: () -> Unit) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.avatar_change)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                androidx.compose.material3.FilledTonalButton(onClick = onPhoto, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.avatar_pick_photo))
+                }
+                Text(stringResource(R.string.avatar_or_emoji), style = MaterialTheme.typography.bodyMedium)
+                androidx.compose.foundation.layout.FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    emojiChoices.forEach { e ->
+                        Text(
+                            e, fontSize = androidx.compose.ui.unit.TextUnit(26f, androidx.compose.ui.unit.TextUnitType.Sp),
+                            modifier = Modifier.clickable { onEmoji(e) }.padding(4.dp),
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onClear) { Text(stringResource(R.string.avatar_remove)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+    )
 }

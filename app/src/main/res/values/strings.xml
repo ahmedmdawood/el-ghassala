@@ -301,4 +301,10 @@
     <string name="receipt_share">Share</string>
     <string name="receipt_done">Done</string>
     <string name="busy_washing">Washing your data…</string>
+    <string name="history_title">Closed days</string>
+    <string name="avatar_change">Change picture</string>
+    <string name="avatar_pick_photo">Choose a photo</string>
+    <string name="avatar_or_emoji">or pick an emoji</string>
+    <string name="avatar_remove">Remove</string>
+    <string name="avatar_failed">Could not use that picture.</string>
 </resources>

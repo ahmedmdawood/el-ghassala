@@ -301,4 +301,10 @@
     <string name="receipt_share">مشاركة</string>
     <string name="receipt_done">تمام</string>
     <string name="busy_washing">بنغسل بياناتك…</string>
+    <string name="history_title">الأيام اللي خلصت</string>
+    <string name="avatar_change">غيّر الصورة</string>
+    <string name="avatar_pick_photo">اختار صورة</string>
+    <string name="avatar_or_emoji">أو اختار إيموجي</string>
+    <string name="avatar_remove">شيل الصورة</string>
+    <string name="avatar_failed">مقدرتش أستخدم الصورة دي.</string>
 </resources>

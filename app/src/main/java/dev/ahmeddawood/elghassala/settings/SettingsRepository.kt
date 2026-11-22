@@ -64,6 +64,11 @@ class SettingsRepository(private val context: Context) {
     val funEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.funEnabled] ?: true }
     val funFrequency: Flow<String> = context.dataStore.data.map { it[Keys.funFrequency] ?: "balanced" }
 
+    fun rawFlow(): Flow<androidx.datastore.preferences.core.Preferences> = context.dataStore.data
+    suspend fun editRaw(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {
+        context.dataStore.edit { block(it) }
+    }
+
     /** وضع الستر: mask every amount. */
     val privacyMode: Flow<Boolean> = context.dataStore.data.map { it[Keys.privacy] ?: false }
     suspend fun setPrivacyMode(value: Boolean) {

@@ -193,6 +193,18 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setLanguage(lang: AppLanguage) = viewModelScope.launch { settings.setLanguage(lang) }
     fun setTheme(value: AppTheme) = viewModelScope.launch { settings.setTheme(value) }
 
+    // ---- Avatars (stored outside the database) ----
+
+    private val avatarStore = application.avatarStore
+    val avatars: StateFlow<Map<Long, dev.ahmeddawood.elghassala.settings.Avatar>> = avatarStore.avatars
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
+    fun avatarPhotoFile(a: dev.ahmeddawood.elghassala.settings.Avatar) = avatarStore.photoFile(a)
+    fun setAvatarEmoji(personId: Long, emoji: String) = viewModelScope.launch { avatarStore.setEmoji(personId, emoji) }
+    fun clearAvatar(personId: Long) = viewModelScope.launch { avatarStore.clear(personId) }
+    fun setAvatarPhoto(personId: Long, uri: Uri) = viewModelScope.launch {
+        if (!avatarStore.setPhoto(personId, uri)) _events.emit(UiEvent.Message(R.string.avatar_failed))
+    }
+
     // ---- Privacy mode (وضع الستر) ----
 
     val privacyMode: StateFlow<Boolean> = settings.privacyMode

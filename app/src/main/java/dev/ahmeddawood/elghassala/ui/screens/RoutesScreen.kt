@@ -112,7 +112,7 @@ fun RoutesScreen(vm: AppViewModel, nav: NavHostController) {
                             }
                             IconButton(onClick = {
                                 nav.navigate(
-                                    Routes.transportForm()
+                                    Routes.transportForm(routeId = route.id)
                                 )
                             }) {
                                 Icon(Icons.Filled.DirectionsBus, stringResource(R.string.start_trip), tint = MaterialTheme.colorScheme.primary)
