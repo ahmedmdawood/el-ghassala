@@ -172,6 +172,50 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
         }
 
         item {
+            // Money still owed TO the user: driver refunds not yet collected, and what people owe each other.
+            val pendingRefunds = records.refunds.filter { !it.collected }
+            val owedEdges = remember(netBalances) { dev.ahmeddawood.elghassala.domain.FinanceEngine.suggestSettlements(netBalances) }
+            if (pendingRefunds.isNotEmpty() || owedEdges.isNotEmpty()) {
+                Column(Modifier.padding(horizontal = 16.dp)) {
+                    Spacer(Modifier.height(16.dp))
+                    SectionCard {
+                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(stringResource(R.string.owed_to_you_title), style = MaterialTheme.typography.titleMedium)
+                            pendingRefunds.forEach { r ->
+                                val trip = records.transports.firstOrNull { it.id == r.transportId }
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text("${stringResource(R.string.driver_owes)} ${records.peopleNames[r.personId] ?: ""}")
+                                        if (trip != null) Text("${trip.origin} ${arrow()} ${trip.destination}", style = MaterialTheme.typography.bodySmall)
+                                        Text(Money.shown(r.amountCents), color = MaterialTheme.colorScheme.tertiary)
+                                    }
+                                    TextButton(onClick = { vm.setRefundCollected(r.id, true) }) {
+                                        Text(stringResource(R.string.mark_received))
+                                    }
+                                }
+                            }
+                            owedEdges.forEach { e ->
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text("${records.peopleNames[e.fromPersonId] ?: ""} ${arrow()} ${records.peopleNames[e.toPersonId] ?: ""}")
+                                        Text(Money.shown(e.amountCents), color = MaterialTheme.colorScheme.tertiary)
+                                    }
+                                    TextButton(onClick = {
+                                        vm.saveTransfer(
+                                            null, null, e.fromPersonId, e.toPersonId, e.amountCents,
+                                            dev.ahmeddawood.elghassala.data.db.TransferKind.SETTLEMENT,
+                                            System.currentTimeMillis(), "",
+                                        )
+                                    }) { Text(stringResource(R.string.mark_received)) }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
             val day = openDay
             Column(Modifier.padding(horizontal = 16.dp)) {
                 Spacer(Modifier.height(16.dp))

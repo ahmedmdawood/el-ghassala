@@ -313,4 +313,6 @@
     <string name="palette_ocean">المحيط</string>
     <string name="palette_rose">الوردي</string>
     <string name="palette_midnight">منتصف الليل</string>
+    <string name="owed_to_you_title">مستحقاتك عند الناس</string>
+    <string name="mark_received">تم الاستلام</string>
 </resources>

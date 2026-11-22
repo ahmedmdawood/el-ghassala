@@ -313,4 +313,6 @@
     <string name="palette_ocean">Ocean</string>
     <string name="palette_rose">Rose</string>
     <string name="palette_midnight">Midnight</string>
+    <string name="owed_to_you_title">Owed to you</string>
+    <string name="mark_received">Received</string>
 </resources>
