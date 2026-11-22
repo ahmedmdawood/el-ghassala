@@ -289,4 +289,16 @@
     <string name="award_generous_detail">دفع %1$s من جيبه</string>
     <string name="award_regular">زبون الخط</string>
     <string name="award_regular_detail">%1$d مرة على نفس المشوار</string>
+    <string name="receipt_title">إيصال اليوم</string>
+    <string name="receipt_trips">المشاوير</string>
+    <string name="receipt_expenses">المصاريف</string>
+    <string name="receipt_empty">مفيش مصاريف النهاردة.</string>
+    <string name="receipt_total">الإجمالي</string>
+    <string name="receipt_balances">مين له ومين عليه</string>
+    <string name="receipt_refunds">باقي من السواق</string>
+    <string name="receipt_thanks">شكراً إنك لفيت مع الغسالة</string>
+    <string name="receipt_footer">نشوفك بكرة</string>
+    <string name="receipt_share">مشاركة</string>
+    <string name="receipt_done">تمام</string>
+    <string name="busy_washing">بنغسل بياناتك…</string>
 </resources>

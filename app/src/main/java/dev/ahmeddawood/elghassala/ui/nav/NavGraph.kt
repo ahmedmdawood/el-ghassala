@@ -6,6 +6,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.background
+import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -34,6 +38,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -81,6 +86,7 @@ object Routes {
     const val PEOPLE = "people"
     const val PERSON_DETAIL = "person/{personId}"
     const val SEARCH = "search"
+    const val SPIN = "spin"
 
     fun dayDetail(id: Long) = "day/$id"
     fun transportForm(dayId: Long? = null, editId: Long? = null) =
@@ -228,8 +234,33 @@ fun AppNavHost(vm: AppViewModel) {
                 arguments = listOf(navArgument("personId") { type = NavType.LongType }),
             ) { PersonDetailScreen(vm, nav, it.arguments?.getLong("personId") ?: -1L) }
             composable(Routes.SEARCH) { SearchScreen(vm, nav) }
+            composable(Routes.SPIN) {
+                var joke by androidx.compose.runtime.remember {
+                    androidx.compose.runtime.mutableStateOf(vm.pickJoke("spin") ?: "")
+                }
+                dev.ahmeddawood.elghassala.ui.components.SpinCycleScreen(
+                    joke = joke,
+                    onAnother = { joke = vm.pickJoke("spin") ?: joke },
+                    onClose = { nav.popBackStack() },
+                )
+            }
         }
     }
     celebration?.let { CelebrationOverlay(it) { vm.dismissCelebration() } }
+    val receipt by vm.receipt.collectAsState()
+    receipt?.let { dev.ahmeddawood.elghassala.ui.components.ReceiptOverlay(it) { vm.dismissReceipt() } }
+    val busy by vm.busy.collectAsState()
+    if (busy) {
+        Box(
+            Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(0xCC062E27)),
+            contentAlignment = androidx.compose.ui.Alignment.Center,
+        ) {
+            androidx.compose.foundation.layout.Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                dev.ahmeddawood.elghassala.ui.components.SpinLoader(size = 96.dp)
+                androidx.compose.foundation.layout.Spacer(Modifier.height(16.dp))
+                Text(stringResource(R.string.busy_washing), color = androidx.compose.ui.graphics.Color.White)
+            }
+        }
+    }
     }
 }

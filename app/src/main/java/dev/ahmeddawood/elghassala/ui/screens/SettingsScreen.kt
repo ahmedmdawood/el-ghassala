@@ -2,6 +2,7 @@ package dev.ahmeddawood.elghassala.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -126,6 +127,14 @@ fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
                             label = { Text(stringResource(R.string.fun_enabled)) },
                         )
                     }
+                    item {
+                        val privacy by vm.privacyMode.collectAsState()
+                        FilterChip(
+                            selected = privacy,
+                            onClick = { vm.setPrivacyMode(!privacy) },
+                            label = { Text(stringResource(R.string.privacy_toggle)) },
+                        )
+                    }
                     if (funOn) {
                         item {
                             FilterChip(
@@ -234,10 +243,18 @@ fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
                 SectionCard {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(stringResource(R.string.about_text), style = MaterialTheme.typography.bodyLarge)
+                        var taps by remember { mutableStateOf(0) }
                         Text(
                             "${stringResource(R.string.version)} ${BuildConfig.VERSION_NAME}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.clickable(
+                                indication = null,
+                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                            ) {
+                                taps++
+                                if (taps >= 7) { taps = 0; nav.navigate(dev.ahmeddawood.elghassala.ui.nav.Routes.SPIN) }
+                            },
                         )
                         Text(
                             stringResource(R.string.made_by),

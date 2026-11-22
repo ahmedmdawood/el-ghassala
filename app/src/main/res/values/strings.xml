@@ -289,4 +289,16 @@
     <string name="award_generous_detail">Paid %1$s out of pocket</string>
     <string name="award_regular">Line Regular</string>
     <string name="award_regular_detail">%1$d rides on the same route</string>
+    <string name="receipt_title">DAY RECEIPT</string>
+    <string name="receipt_trips">TRIPS</string>
+    <string name="receipt_expenses">EXPENSES</string>
+    <string name="receipt_empty">Nothing was spent today.</string>
+    <string name="receipt_total">TOTAL</string>
+    <string name="receipt_balances">WHO OWES WHOM</string>
+    <string name="receipt_refunds">Driver refunds still out</string>
+    <string name="receipt_thanks">Thanks for riding with El Ghassala</string>
+    <string name="receipt_footer">SEE YOU TOMORROW</string>
+    <string name="receipt_share">Share</string>
+    <string name="receipt_done">Done</string>
+    <string name="busy_washing">Washing your data…</string>
 </resources>

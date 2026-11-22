@@ -241,7 +241,19 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val celebration = MutableStateFlow<DayCelebration?>(null)
-    fun dismissCelebration() { celebration.value = null }
+    /** Receipt-style summary, shown after the celebration. */
+    val receipt = MutableStateFlow<dev.ahmeddawood.elghassala.ui.components.DayReceipt?>(null)
+    private var pendingReceipt: dev.ahmeddawood.elghassala.ui.components.DayReceipt? = null
+    fun dismissCelebration() {
+        celebration.value = null
+        pendingReceipt?.let { receipt.value = it; pendingReceipt = null }
+    }
+    fun dismissReceipt() { receipt.value = null }
+
+    /** True while an import or restore is running: the washing machine spins. */
+    val busy = MutableStateFlow(false)
+
+    fun pickJoke(bucket: String): String? = jokes.pick(bucket)
 
     fun startDay() = viewModelScope.launch {
         if (repo.currentOpenDay() != null) return@launch
@@ -271,6 +283,30 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val message = (if (funEnabled.value) jokes.pick("day_close") else null)
             ?: getApplication<Application>().getString(R.string.day_celebration_title)
         celebration.value = DayCelebration(day.title, dayTransports.size, transportTotal + expenseTotal, message)
+
+        // Receipt data: every trip and expense of the day, who owes whom, refunds still out.
+        val names = rec.peopleNames
+        val ledger = ledgerForDay(rec, day.id)
+        val tripLines = dayTransports.sortedBy { it.dateMillis }.map { t ->
+            val riders = rec.participants.count { it.transportId == t.id }.coerceAtLeast(1)
+            dev.ahmeddawood.elghassala.ui.components.ReceiptLine(
+                "${t.origin}→${t.destination}", "x$riders", t.fareCents * riders,
+            )
+        }
+        val expenseLines = rec.expenses.filter { it.dayId == day.id }.sortedBy { it.dateMillis }.map {
+            dev.ahmeddawood.elghassala.ui.components.ReceiptLine(it.title, "", it.totalCents)
+        }
+        val dayTransportIds = dayTransports.map { it.id }.toSet()
+        pendingReceipt = dev.ahmeddawood.elghassala.ui.components.DayReceipt(
+            dayTitle = day.title,
+            dateText = java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale.getDefault()).format(java.util.Date(day.dateMillis)),
+            tripLines = tripLines,
+            expenseLines = expenseLines,
+            totalCents = transportTotal + expenseTotal,
+            balances = ledger.map { (pid, l) -> (names[pid] ?: "#$pid") to l.netBalanceCents },
+            refundsOutstandingCents = rec.refunds.filter { it.transportId in dayTransportIds && !it.collected }.sumOf { it.amountCents },
+            joke = if (funEnabled.value) jokes.pick("receipt") else null,
+        )
     }
 
     /** Day id a new record should belong to, or null (after telling the user) when no day is open. */
@@ -489,7 +525,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val p = pendingImport.value ?: return@launch
         pendingImport.value = null
         val app = getApplication<Application>()
+        busy.value = true
         runCatching {
+            kotlinx.coroutines.delay(600) // let the washing machine be seen
+
             when (p.kind) {
                 ImportKind.LEGACY -> {
                     val r = repo.importLegacy(p.text)
@@ -501,7 +540,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                     importNotice.value = app.getString(R.string.restore_success)
                 }
             }
-        }.onFailure {
+        }.also { busy.value = false }.onFailure {
             importNotice.value = app.getString(
                 if (p.kind == ImportKind.LEGACY) R.string.legacy_import_failed else R.string.restore_failed
             ) + "\n\n" + (it.message ?: it.javaClass.simpleName)
