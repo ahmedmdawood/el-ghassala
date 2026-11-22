@@ -20,6 +20,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.layout.Box
+import dev.ahmeddawood.elghassala.UiEvent
+import dev.ahmeddawood.elghassala.ui.components.CelebrationOverlay
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -103,7 +112,26 @@ fun AppNavHost(vm: AppViewModel) {
     val currentRoute = backStack?.destination?.route
     val showBottomBar = currentRoute in tabRoutes
 
+    val snackbarState = remember { SnackbarHostState() }
+    val ctx = LocalContext.current
+    val celebration by vm.celebration.collectAsState()
+    LaunchedEffect(Unit) {
+        vm.events.collect { event ->
+            val text = when (event) {
+                is UiEvent.Message -> ctx.getString(event.resId)
+                is UiEvent.Text -> event.text
+                else -> null
+            }
+            if (text != null) {
+                snackbarState.currentSnackbarData?.dismiss()
+                snackbarState.showSnackbar(text, duration = androidx.compose.material3.SnackbarDuration.Short)
+            }
+        }
+    }
+
+    Box {
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarState) },
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
@@ -201,5 +229,7 @@ fun AppNavHost(vm: AppViewModel) {
             ) { PersonDetailScreen(vm, nav, it.arguments?.getLong("personId") ?: -1L) }
             composable(Routes.SEARCH) { SearchScreen(vm, nav) }
         }
+    }
+    celebration?.let { CelebrationOverlay(it) { vm.dismissCelebration() } }
     }
 }

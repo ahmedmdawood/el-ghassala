@@ -115,6 +115,48 @@ fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
         }
 
         item {
+            val funOn by vm.funEnabled.collectAsState()
+            val funFreq by vm.funFrequency.collectAsState()
+            Column(Modifier.padding(horizontal = 16.dp)) {
+                Spacer(Modifier.height(16.dp))
+                SectionHeader(Icons.Filled.Settings, stringResource(R.string.personality_title))
+                Spacer(Modifier.height(8.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item {
+                        FilterChip(
+                            selected = funOn,
+                            onClick = { vm.setFunEnabled(!funOn) },
+                            label = { Text(stringResource(R.string.fun_enabled)) },
+                        )
+                    }
+                    if (funOn) {
+                        item {
+                            FilterChip(
+                                selected = funFreq == "often",
+                                onClick = { vm.setFunFrequency("often") },
+                                label = { Text(stringResource(R.string.freq_often)) },
+                            )
+                        }
+                        item {
+                            FilterChip(
+                                selected = funFreq == "balanced",
+                                onClick = { vm.setFunFrequency("balanced") },
+                                label = { Text(stringResource(R.string.freq_balanced)) },
+                            )
+                        }
+                        item {
+                            FilterChip(
+                                selected = funFreq == "rare",
+                                onClick = { vm.setFunFrequency("rare") },
+                                label = { Text(stringResource(R.string.freq_rare)) },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
             Column(Modifier.padding(horizontal = 16.dp)) {
                 Spacer(Modifier.height(16.dp))
                 SectionHeader(Icons.Filled.Palette, stringResource(R.string.appearance))
@@ -243,10 +285,19 @@ fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
                     Text("${stringResource(R.string.legacy_expenses)}: ${r.expensesAdded}")
                     Text("${stringResource(R.string.legacy_transfers)}: ${r.transfersAdded}")
                     Text("${stringResource(R.string.legacy_refunds_collected)}: ${r.refundsMarkedCollected}")
-                    if (r.warnings.isNotEmpty()) {
+                    val dupeLine = r.warnings.firstOrNull { it.startsWith("ALREADY_IMPORTED:") }
+                    if (dupeLine != null) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            stringResource(R.string.legacy_already_imported, dupeLine.substringAfter(":").toIntOrNull() ?: 0),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                    val realWarnings = r.warnings.filter { !it.startsWith("ALREADY_IMPORTED:") }
+                    if (realWarnings.isNotEmpty()) {
                         Spacer(Modifier.height(4.dp))
                         Text(stringResource(R.string.legacy_warnings), style = MaterialTheme.typography.titleSmall)
-                        r.warnings.forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+                        realWarnings.forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
                     }
                 }
             },

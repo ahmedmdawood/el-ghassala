@@ -9,4 +9,5 @@ class ElGhassalaApp : Application() {
     val database: AppDatabase by lazy { AppDatabase.get(this) }
     val repository: GhassalaRepository by lazy { GhassalaRepository(database) }
     val settings: SettingsRepository by lazy { SettingsRepository(this) }
+    val jokes: dev.ahmeddawood.elghassala.playful.JokeRepository by lazy { dev.ahmeddawood.elghassala.playful.JokeRepository(this) }
 }

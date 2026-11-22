@@ -30,9 +30,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import dev.ahmeddawood.elghassala.ui.components.DayCelebration
 
 sealed class UiEvent {
     data class Message(val resId: Int) : UiEvent()
+    data class Text(val text: String) : UiEvent()
     data class RefundPrompt(val refunds: List<DriverRefundEntity>) : UiEvent()
 }
 
@@ -183,6 +185,75 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setLanguage(lang: AppLanguage) = viewModelScope.launch { settings.setLanguage(lang) }
     fun setTheme(value: AppTheme) = viewModelScope.launch { settings.setTheme(value) }
 
+    // ---- Playful feedback ----
+
+    private val jokes = application.jokes
+
+    val funEnabled: StateFlow<Boolean> = settings.funEnabled
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val funFrequency: StateFlow<String> = settings.funFrequency
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "balanced")
+
+    fun setFunEnabled(value: Boolean) = viewModelScope.launch { settings.setFunEnabled(value) }
+    fun setFunFrequency(value: String) = viewModelScope.launch { settings.setFunFrequency(value) }
+
+    /** Emits a joke from [bucket] (subject to the user's toggle and frequency) or the plain message. */
+    private suspend fun feedback(bucket: String, fallbackRes: Int, always: Boolean = false) {
+        if (funEnabled.value) {
+            val chance = when (funFrequency.value) { "often" -> 1.0; "rare" -> 0.2; else -> 0.5 }
+            if (always || Math.random() < chance) {
+                jokes.pick(bucket)?.let { _events.emit(UiEvent.Text(it)); return }
+            }
+        }
+        _events.emit(UiEvent.Message(fallbackRes))
+    }
+
+    // ---- Day lifecycle ----
+
+    val openDay: StateFlow<DayEntity?> = records
+        .map { r -> r.days.filter { !it.isClosed }.maxWithOrNull(compareBy({ it.dateMillis }, { it.id })) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val celebration = MutableStateFlow<DayCelebration?>(null)
+    fun dismissCelebration() { celebration.value = null }
+
+    fun startDay() = viewModelScope.launch {
+        if (repo.currentOpenDay() != null) return@launch
+        val cal = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 0); set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0); set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val base = java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.getDefault()).format(cal.time)
+        var title = base
+        var n = 2
+        while (true) {
+            try { repo.saveDay(null, title, cal.timeInMillis); break }
+            catch (e: DuplicateNameException) { title = "$base ($n)"; n++ }
+        }
+        feedback("day_start", R.string.day_started, always = true)
+    }
+
+    fun endDay() = viewModelScope.launch {
+        val day = repo.currentOpenDay() ?: return@launch
+        val rec = records.value
+        val dayTransports = rec.transports.filter { it.dayId == day.id }
+        val transportTotal = dayTransports.sumOf { t ->
+            t.fareCents * rec.participants.count { it.transportId == t.id }.coerceAtLeast(1)
+        }
+        val expenseTotal = rec.expenses.filter { it.dayId == day.id }.sumOf { it.totalCents }
+        repo.setDayClosed(day.id, true)
+        val message = (if (funEnabled.value) jokes.pick("day_close") else null)
+            ?: getApplication<Application>().getString(R.string.day_celebration_title)
+        celebration.value = DayCelebration(day.title, dayTransports.size, transportTotal + expenseTotal, message)
+    }
+
+    /** Day id a new record should belong to, or null (after telling the user) when no day is open. */
+    private suspend fun requireOpenDayId(): Long? {
+        val day = repo.currentOpenDay()
+        if (day == null) _events.emit(UiEvent.Message(R.string.no_open_day))
+        return day?.id
+    }
+
     // ---- Days ----
 
     fun saveDay(id: Long?, title: String, dateMillis: Long) = viewModelScope.launch {
@@ -209,7 +280,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun savePerson(id: Long?, name: String) = viewModelScope.launch {
         runCatching { repo.savePerson(id, name) }
-            .onSuccess { _events.emit(UiEvent.Message(R.string.saved_successfully)) }
+            .onSuccess { if (id == null) feedback("person_added", R.string.saved_successfully) else _events.emit(UiEvent.Message(R.string.saved_successfully)) }
             .onFailure {
                 _events.emit(UiEvent.Message(if (it is DuplicateNameException) R.string.duplicate_person else R.string.error_required))
             }
@@ -224,7 +295,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun saveRoute(id: Long?, name: String, origin: String, destination: String, fareCents: Long) = viewModelScope.launch {
         runCatching { repo.saveRoute(id, name, origin, destination, fareCents) }
-            .onSuccess { _events.emit(UiEvent.Message(R.string.saved_successfully)) }
+            .onSuccess { if (id == null) feedback("route_saved", R.string.saved_successfully) else _events.emit(UiEvent.Message(R.string.saved_successfully)) }
             .onFailure {
                 _events.emit(UiEvent.Message(if (it is DuplicateNameException) R.string.duplicate_route else R.string.error_required))
             }
@@ -237,7 +308,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---- Transport ----
 
-    fun saveTransport(id: Long?, input: TransportInput, markRefundsCollected: Boolean? = null) = viewModelScope.launch {
+    fun saveTransport(id: Long?, inputIn: TransportInput, markRefundsCollected: Boolean? = null) = viewModelScope.launch {
+        var input = inputIn
+        if (id == null) {
+            val openId = requireOpenDayId() ?: return@launch
+            input = inputIn.copy(dayId = openId)
+        }
         runCatching { repo.saveTransport(id, input) }
             .onSuccess { (_, refunds) ->
                 if (markRefundsCollected != null) {
@@ -246,7 +322,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 if (refunds.isNotEmpty() && markRefundsCollected == null) {
                     _events.emit(UiEvent.RefundPrompt(refunds))
                 } else {
-                    _events.emit(UiEvent.Message(R.string.transport_saved))
+                    val total = input.fareCents * input.paid.size
+                    val onePayer = input.paid.size > 1 && input.paid.values.count { it > 0 } == 1 &&
+                        input.paid.values.sum() >= total
+                    feedback(if (onePayer) "trip_one_payer" else "trip_added", R.string.transport_saved)
                 }
             }
             .onFailure { _events.emit(UiEvent.Message(R.string.error_required)) }
@@ -265,9 +344,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---- Expenses ----
 
-    fun saveExpense(id: Long?, input: ExpenseInput) = viewModelScope.launch {
+    fun saveExpense(id: Long?, inputIn: ExpenseInput) = viewModelScope.launch {
+        var input = inputIn
+        if (id == null) {
+            val openId = requireOpenDayId() ?: return@launch
+            input = inputIn.copy(dayId = openId)
+        }
         runCatching { repo.saveExpense(id, input) }
-            .onSuccess { _events.emit(UiEvent.Message(R.string.saved_successfully)) }
+            .onSuccess { feedback("expense_added", R.string.saved_successfully) }
             .onFailure {
                 _events.emit(
                     UiEvent.Message(
@@ -294,7 +378,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     ) = viewModelScope.launch {
         runCatching { repo.saveTransfer(id, dayId, from, to, amountCents, kind, dateMillis, notes) }
             .onSuccess {
-                _events.emit(UiEvent.Message(if (kind == TransferKind.SETTLEMENT) R.string.settlement_recorded else R.string.saved_successfully))
+                val n = notes.lowercase()
+                val bucket = when {
+                    kind == TransferKind.SETTLEMENT -> "settlement_recorded"
+                    "instapay" in n || "انستا" in n || "إنستا" in n -> "transfer_instapay"
+                    "vodafone" in n || "فودافون" in n -> "transfer_vodafone"
+                    else -> "transfer_cash"
+                }
+                feedback(bucket, if (kind == TransferKind.SETTLEMENT) R.string.settlement_recorded else R.string.saved_successfully)
             }
             .onFailure { _events.emit(UiEvent.Message(R.string.error_required)) }
     }
@@ -308,7 +399,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setRefundCollected(refundId: Long, collected: Boolean) = viewModelScope.launch {
         repo.setRefundCollected(refundId, collected)
-        _events.emit(UiEvent.Message(if (collected) R.string.refund_marked_collected else R.string.refund_kept_outstanding))
+        if (collected) feedback("refund_collected", R.string.refund_marked_collected)
+        else _events.emit(UiEvent.Message(R.string.refund_kept_outstanding))
     }
 
     // ---- Backup / export ----
@@ -331,7 +423,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 it.readBytes().toString(Charsets.UTF_8)
             } ?: error("no stream")
             repo.importLegacy(text)
-        }.onSuccess { legacyImportResult.value = it }
+        }.onSuccess { legacyImportResult.value = it; feedback("import_done", R.string.legacy_ok) }
             .onFailure { _events.emit(UiEvent.Message(R.string.legacy_import_failed)) }
     }
 

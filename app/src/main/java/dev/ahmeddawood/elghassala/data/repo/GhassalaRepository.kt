@@ -76,6 +76,10 @@ class GhassalaRepository(private val db: AppDatabase) {
         }
     }
 
+    /** The newest day that is still open, or null when no day is open. */
+    suspend fun currentOpenDay(): DayEntity? =
+        days.all().filter { !it.isClosed }.maxWithOrNull(compareBy({ it.dateMillis }, { it.id }))
+
     suspend fun setDayClosed(dayId: Long, closed: Boolean) {
         days.getById(dayId)?.let { days.update(it.copy(isClosed = closed)) }
     }
@@ -380,11 +384,21 @@ class GhassalaRepository(private val db: AppDatabase) {
 
         // Days.
         val dayIds = HashMap<Long, Long>()
-        val usedTitles = days.all().map { it.title.lowercase() }.toMutableSet()
+        val existingDays = days.all()
+        val usedTitles = existingDays.map { it.title.lowercase() }.toMutableSet()
+        var dayDupes = 0
+        var daysNew = 0
         legacy.days.forEach { d ->
             val dateMillis = d.date?.let {
                 runCatching { dayFormat.parse(it)?.time }.getOrNull()
             } ?: d.createdAt
+            val sameDay = existingDays.firstOrNull { it.title == d.title.ifBlank { d.date ?: "day ${d.id}" } && it.dateMillis == dateMillis }
+            if (sameDay != null) {
+                dayIds[d.id] = sameDay.id
+                dayDupes++
+                return@forEach
+            }
+            daysNew++
             var title = d.title.ifBlank { d.date ?: "day ${d.id}" }
             var n = 2
             val base = title
@@ -395,7 +409,12 @@ class GhassalaRepository(private val db: AppDatabase) {
         }
 
         // Saved routes.
+        val existingRoutes = routes.all().map { Triple(it.name, it.origin, it.destination) }.toSet()
+        var routesNew = 0
+        var routeDupes = 0
         legacy.routes.forEach { r ->
+            if (Triple(r.title.ifBlank { "${r.origin} → ${r.destination}" }, r.origin, r.destination) in existingRoutes) { routeDupes++; return@forEach }
+            routesNew++
             routes.insert(
                 RouteEntity(
                     name = r.title.ifBlank { "${r.origin} → ${r.destination}" },
@@ -408,7 +427,15 @@ class GhassalaRepository(private val db: AppDatabase) {
 
         // Transports (+ participants + recomputed refunds).
         val transportIds = HashMap<Long, Long>()
+        val skippedTransports = HashSet<Long>()
+        val existingTransportKeys = transports.all().map { listOf(it.dateMillis, it.origin, it.destination, it.fareCents) }.toMutableSet()
+        var transportDupes = 0
         legacy.transports.forEach { t ->
+            if (!existingTransportKeys.add(listOf(t.timestamp, t.origin, t.destination, (t.farePerPerson * 100).toLong()))) {
+                skippedTransports += t.id
+                transportDupes++
+                return@forEach
+            }
             if (t.participants.isEmpty()) {
                 warnings += "transport ${t.id} skipped: no participants"
                 return@forEach
@@ -451,6 +478,7 @@ class GhassalaRepository(private val db: AppDatabase) {
         // Reconcile collected state from the old refund rows.
         var markedCollected = 0
         legacy.refunds.forEach { r ->
+            if (r.transactionId in skippedTransports) return@forEach
             val newTransport = transportIds[r.transactionId]
             val pid = personIds[r.participantName]
             if (newTransport == null || pid == null) {
@@ -471,6 +499,8 @@ class GhassalaRepository(private val db: AppDatabase) {
 
         // Expenses.
         var expensesAdded = 0
+        var expenseDupes = 0
+        val existingExpenseKeys = expenses.all().map { listOf(it.dateMillis, it.title, it.totalCents) }.toMutableSet()
         legacy.expenses.forEach { e ->
             val shares = e.beneficiaryShares.mapNotNull { (n, v) -> personIds[n.trim()]?.let { it to (v * 100).toLong() } }.toMap()
             val payers = e.payerPayments.mapNotNull { (n, v) -> personIds[n.trim()]?.let { it to (v * 100).toLong() } }.toMap()
@@ -480,6 +510,7 @@ class GhassalaRepository(private val db: AppDatabase) {
             }
             val total = if (shares.isNotEmpty()) shares.values.sum() else payers.values.sum()
             val title = e.title.ifBlank { e.notes.ifBlank { e.category.ifBlank { "Expense" } } }
+            if (!existingExpenseKeys.add(listOf(e.timestamp, title, total))) { expenseDupes++; return@forEach }
             val newId = expenses.insert(
                 ExpenseEntity(
                     dayId = e.dayId?.let { dayIds[it] }, title = title, totalCents = total,
@@ -493,6 +524,8 @@ class GhassalaRepository(private val db: AppDatabase) {
 
         // Transfers.
         var transfersAdded = 0
+        var transferDupes = 0
+        val existingTransferKeys = transfers.all().map { listOf(it.dateMillis, it.fromPersonId, it.toPersonId, it.amountCents) }.toMutableSet()
         legacy.transfers.forEach { t ->
             val from = personIds[t.from]
             val to = personIds[t.to]
@@ -500,6 +533,7 @@ class GhassalaRepository(private val db: AppDatabase) {
                 warnings += "transfer ${t.id} skipped"
                 return@forEach
             }
+            if (!existingTransferKeys.add(listOf(t.timestamp, from, to, (t.amount * 100).toLong()))) { transferDupes++; return@forEach }
             val isSettlement = t.notes.contains("Settlement", ignoreCase = true) || t.notes.contains("تصفية")
             transfers.insert(
                 TransferEntity(
@@ -513,11 +547,13 @@ class GhassalaRepository(private val db: AppDatabase) {
             transfersAdded++
         }
 
+        val dupes = dayDupes + routeDupes + transportDupes + expenseDupes + transferDupes
+        if (dupes > 0) warnings += "ALREADY_IMPORTED:$dupes"
         dev.ahmeddawood.elghassala.backup.LegacyImporter.Result(
-            daysAdded = dayIds.size,
+            daysAdded = daysNew,
             peopleAdded = peopleAdded,
             peopleReused = peopleReused,
-            routesAdded = legacy.routes.size,
+            routesAdded = routesNew,
             transportsAdded = transportIds.size,
             expensesAdded = expensesAdded,
             transfersAdded = transfersAdded,

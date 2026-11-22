@@ -252,4 +252,27 @@
     <string name="legacy_refunds_collected">Driver refunds marked collected</string>
     <string name="legacy_warnings">Notes</string>
     <string name="legacy_ok">OK</string>
+    <string name="legacy_already_imported">%1$d records were already in the app and were skipped, so nothing was duplicated.</string>
+    <string name="no_open_day">Start your day first, then log trips and expenses.</string>
+    <string name="day_started">Day started. Let\'s go!</string>
+    <string name="day_celebration_title">Day complete</string>
+    <string name="celebration_trips">%1$d trips</string>
+    <string name="celebration_total">Total %1$s</string>
+    <string name="celebration_tap">Tap anywhere to continue</string>
+    <string name="start_day_title">Ready for a new day?</string>
+    <string name="start_day_sub">Start the day to begin logging trips and expenses.</string>
+    <string name="start_day_button">Start my day</string>
+    <string name="end_day_button">End day</string>
+    <string name="end_day_confirm_title">End this day?</string>
+    <string name="end_day_confirm_body">The day will be closed. You can reopen it later from the Days tab.</string>
+    <string name="end_day_confirm_yes">End day</string>
+    <string name="end_day_confirm_no">Not yet</string>
+    <string name="day_card_open">Day in progress</string>
+    <string name="day_card_stats">%1$d trips  •  %2$s</string>
+    <string name="personality_title">Personality</string>
+    <string name="fun_enabled">Playful messages</string>
+    <string name="fun_frequency">How often</string>
+    <string name="freq_often">Often</string>
+    <string name="freq_balanced">Balanced</string>
+    <string name="freq_rare">Rare</string>
 </resources>

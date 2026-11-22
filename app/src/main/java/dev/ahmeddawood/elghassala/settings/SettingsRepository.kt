@@ -1,6 +1,7 @@
 package dev.ahmeddawood.elghassala.settings
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -17,6 +18,8 @@ class SettingsRepository(private val context: Context) {
     private object Keys {
         val language = stringPreferencesKey("language")
         val theme = stringPreferencesKey("theme")
+        val funEnabled = booleanPreferencesKey("fun_enabled")
+        val funFrequency = stringPreferencesKey("fun_frequency")
     }
 
     val language: Flow<AppLanguage> = context.dataStore.data.map {
@@ -53,5 +56,17 @@ class SettingsRepository(private val context: Context) {
                 AppTheme.SYSTEM -> "system"
             }
         }
+    }
+
+    /** Playful feedback messages: on/off and how often (often / balanced / rare). */
+    val funEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.funEnabled] ?: true }
+    val funFrequency: Flow<String> = context.dataStore.data.map { it[Keys.funFrequency] ?: "balanced" }
+
+    suspend fun setFunEnabled(value: Boolean) {
+        context.dataStore.edit { it[Keys.funEnabled] = value }
+    }
+
+    suspend fun setFunFrequency(value: String) {
+        context.dataStore.edit { it[Keys.funFrequency] = value }
     }
 }

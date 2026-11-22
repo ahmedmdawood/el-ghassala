@@ -252,4 +252,27 @@
     <string name="legacy_refunds_collected">مستحقات السائق المحصّلة</string>
     <string name="legacy_warnings">ملاحظات</string>
     <string name="legacy_ok">حسناً</string>
+    <string name="legacy_already_imported">%1$d سجل كان موجود بالفعل في التطبيق فاتخطّى، ومفيش أي تكرار.</string>
+    <string name="no_open_day">ابدأ يومك الأول، وبعدين سجّل المشاوير والمصاريف.</string>
+    <string name="day_started">اليوم ابتدا. يلا بينا!</string>
+    <string name="day_celebration_title">خلّصت يومك</string>
+    <string name="celebration_trips">%1$d مشوار</string>
+    <string name="celebration_total">الإجمالي %1$s</string>
+    <string name="celebration_tap">اضغط في أي مكان للمتابعة</string>
+    <string name="start_day_title">جاهز ليوم جديد؟</string>
+    <string name="start_day_sub">ابدأ اليوم عشان تقدر تسجّل المشاوير والمصاريف.</string>
+    <string name="start_day_button">ابدأ يومي</string>
+    <string name="end_day_button">إنهاء اليوم</string>
+    <string name="end_day_confirm_title">تنهي اليوم ده؟</string>
+    <string name="end_day_confirm_body">اليوم هيتقفل. تقدر تفتحه تاني من تبويب الأيام.</string>
+    <string name="end_day_confirm_yes">إنهاء اليوم</string>
+    <string name="end_day_confirm_no">مش دلوقتي</string>
+    <string name="day_card_open">اليوم شغّال</string>
+    <string name="day_card_stats">%1$d مشوار  •  %2$s</string>
+    <string name="personality_title">الشخصية</string>
+    <string name="fun_enabled">رسايل الهزار</string>
+    <string name="fun_frequency">كل قد إيه</string>
+    <string name="freq_often">كتير</string>
+    <string name="freq_balanced">متوازن</string>
+    <string name="freq_rare">نادر</string>
 </resources>

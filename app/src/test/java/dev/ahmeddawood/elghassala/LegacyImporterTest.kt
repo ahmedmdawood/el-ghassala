@@ -66,6 +66,24 @@ class LegacyImporterTest {
     """.trimIndent()
 
     @Test
+    fun import_twiceDoesNotDuplicate() = runBlocking {
+        repo.importLegacy(sample)
+        val before = repo.snapshot()
+        val second = repo.importLegacy(sample)
+        val after = repo.snapshot()
+        assertEquals(0, second.daysAdded)
+        assertEquals(0, second.routesAdded)
+        assertEquals(0, second.transportsAdded)
+        assertEquals(0, second.expensesAdded)
+        assertEquals(0, second.transfersAdded)
+        assertTrue(second.warnings.any { it.startsWith("ALREADY_IMPORTED:") })
+        assertEquals(before.days.size, after.days.size)
+        assertEquals(before.transports.size, after.transports.size)
+        assertEquals(before.refunds.size, after.refunds.size)
+        assertEquals(before.transfers.size, after.transfers.size)
+    }
+
+    @Test
     fun import_fullFlow() = runBlocking {
         // Pre-existing person must be reused, not duplicated.
         db.personDao().insert(PersonEntity(name = "ahmed"))

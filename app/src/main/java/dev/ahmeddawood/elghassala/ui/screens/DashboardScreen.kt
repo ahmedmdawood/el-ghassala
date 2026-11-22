@@ -25,7 +25,21 @@ import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -82,6 +96,23 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
     }
     val netBalances = ledgers.mapValues { it.value.netBalanceCents }.filterValues { it != 0L }
     val openDays = records.days.filter { !it.isClosed }
+    val openDay by vm.openDay.collectAsState()
+    var confirmEnd by remember { mutableStateOf(false) }
+    if (confirmEnd) {
+        AlertDialog(
+            onDismissRequest = { confirmEnd = false },
+            title = { Text(stringResource(R.string.end_day_confirm_title)) },
+            text = { Text(stringResource(R.string.end_day_confirm_body)) },
+            confirmButton = {
+                TextButton(onClick = { confirmEnd = false; vm.endDay() }) {
+                    Text(stringResource(R.string.end_day_confirm_yes))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmEnd = false }) { Text(stringResource(R.string.end_day_confirm_no)) }
+            },
+        )
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -127,12 +158,86 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
         }
 
         item {
+            val day = openDay
+            Column(Modifier.padding(horizontal = 16.dp)) {
+                Spacer(Modifier.height(16.dp))
+                if (day == null) {
+                    val pulse = rememberInfiniteTransition(label = "pulse")
+                    val scale by pulse.animateFloat(
+                        initialValue = 1f, targetValue = 1.05f,
+                        animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "pulseScale",
+                    )
+                    SectionCard {
+                        Column(
+                            Modifier.fillMaxWidth().padding(22.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Icon(
+                                Icons.Filled.WbSunny, null,
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(44.dp).graphicsLayer { scaleX = scale; scaleY = scale },
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            Text(stringResource(R.string.start_day_title), style = MaterialTheme.typography.titleLarge)
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                stringResource(R.string.start_day_sub),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            Button(
+                                onClick = { vm.startDay() },
+                                modifier = Modifier.fillMaxWidth().height(54.dp).graphicsLayer { scaleX = scale; scaleY = scale },
+                            ) {
+                                Text(stringResource(R.string.start_day_button), style = MaterialTheme.typography.titleMedium)
+                            }
+                        }
+                    }
+                } else {
+                    val dayTrips = records.transports.filter { it.dayId == day.id }
+                    val dayTotal = dayTrips.sumOf { t ->
+                        t.fareCents * records.participants.count { it.transportId == t.id }.coerceAtLeast(1)
+                    } + records.expenses.filter { it.dayId == day.id }.sumOf { it.totalCents }
+                    SectionCard {
+                        Column(Modifier.fillMaxWidth().padding(18.dp)) {
+                            Text(
+                                stringResource(R.string.day_card_open),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(day.title, style = MaterialTheme.typography.titleLarge)
+                            Text(
+                                stringResource(R.string.day_card_stats, dayTrips.size, Money.formatWithCurrency(dayTotal)),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.height(14.dp))
+                            Button(
+                                onClick = { confirmEnd = true },
+                                modifier = Modifier.fillMaxWidth().height(56.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.secondary,
+                                    contentColor = MaterialTheme.colorScheme.onSecondary,
+                                ),
+                            ) {
+                                Icon(Icons.Filled.Check, null)
+                                Spacer(Modifier.size(8.dp))
+                                Text(stringResource(R.string.end_day_button), style = MaterialTheme.typography.titleMedium)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
             Column(Modifier.padding(horizontal = 16.dp)) {
                 Spacer(Modifier.height(16.dp))
                 SectionHeader(Icons.Filled.Savings, stringResource(R.string.quick_actions))
                 Spacer(Modifier.height(8.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    item {
+                    if (openDay != null) item {
                         QuickAction(stringResource(R.string.start_trip), Icons.Filled.DirectionsBus) {
                             nav.navigate(Routes.transportForm())
                         }
@@ -142,7 +247,7 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
                             nav.navigate(Routes.DAYS)
                         }
                     }
-                    item {
+                    if (openDay != null) item {
                         QuickAction(stringResource(R.string.new_expense), Icons.Filled.Payments) {
                             nav.navigate(Routes.expenseForm())
                         }
