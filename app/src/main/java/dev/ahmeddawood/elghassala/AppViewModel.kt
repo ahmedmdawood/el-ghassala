@@ -415,6 +415,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     val legacyImportResult = MutableStateFlow<LegacyImporter.Result?>(null)
+    val importNotice = MutableStateFlow<String?>(null)
+    fun clearImportNotice() { importNotice.value = null }
     fun clearLegacyImportResult() { legacyImportResult.value = null }
 
     fun importLegacyBackup(uri: Uri) = viewModelScope.launch {
@@ -424,7 +426,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             } ?: error("no stream")
             repo.importLegacy(text)
         }.onSuccess { legacyImportResult.value = it; feedback("import_done", R.string.legacy_ok) }
-            .onFailure { _events.emit(UiEvent.Message(R.string.legacy_import_failed)) }
+            .onFailure {
+                val app = getApplication<Application>()
+                importNotice.value = app.getString(R.string.legacy_import_failed) + "\n\n" + (it.message ?: it.javaClass.simpleName)
+            }
     }
 
     fun importBackup(uri: Uri) = viewModelScope.launch {
@@ -433,8 +438,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 it.readBytes().toString(Charsets.UTF_8)
             } ?: error("no stream")
             repo.replaceAll(BackupManager.parse(text))
-        }.onSuccess { _events.emit(UiEvent.Message(R.string.restore_success)) }
-            .onFailure { _events.emit(UiEvent.Message(R.string.restore_failed)) }
+        }.onSuccess { importNotice.value = getApplication<Application>().getString(R.string.restore_success) }
+            .onFailure {
+                importNotice.value = getApplication<Application>().getString(R.string.restore_failed) + "\n\n" + (it.message ?: it.javaClass.simpleName)
+            }
     }
 
     fun exportCsv(uri: Uri) = viewModelScope.launch {

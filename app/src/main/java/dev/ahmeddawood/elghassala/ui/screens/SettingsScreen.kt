@@ -50,6 +50,7 @@ fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
     var confirmImport by remember { mutableStateOf<android.net.Uri?>(null) }
     var confirmLegacyImport by remember { mutableStateOf<android.net.Uri?>(null) }
     val legacyResult by vm.legacyImportResult.collectAsState()
+    val importNotice by vm.importNotice.collectAsState()
 
     val stamp = remember { SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date()) }
 
@@ -254,7 +255,7 @@ fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
         ConfirmDialog(
             title = stringResource(R.string.import_backup),
             text = stringResource(R.string.import_confirm),
-            onConfirm = { vm.importBackup(uri) },
+            onConfirm = { vm.importBackup(uri); confirmImport = null },
             onDismiss = { confirmImport = null },
         )
     }
@@ -268,11 +269,19 @@ fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
         )
     }
 
+    importNotice?.let { msg ->
+        AlertDialog(
+            onDismissRequest = { vm.clearImportNotice() },
+            confirmButton = { TextButton(onClick = { vm.clearImportNotice() }) { Text(stringResource(R.string.legacy_ok)) } },
+            text = { Text(msg) },
+        )
+    }
+
     legacyResult?.let { r ->
         AlertDialog(
             onDismissRequest = { vm.clearLegacyImportResult() },
             confirmButton = {
-                TextButton(onClick = { vm.clearLegacyImportResult() }) { Text(stringResource(R.string.legacy_ok)) }
+                TextButton(onClick = { vm.clearLegacyImportResult(); nav.navigate(dev.ahmeddawood.elghassala.ui.nav.Routes.DAYS) }) { Text(stringResource(R.string.legacy_ok)) }
             },
             title = { Text(stringResource(R.string.legacy_import_done)) },
             text = {
