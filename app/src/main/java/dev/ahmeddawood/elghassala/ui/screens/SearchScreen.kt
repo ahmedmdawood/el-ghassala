@@ -140,7 +140,7 @@ fun SearchScreen(vm: AppViewModel, nav: NavHostController) {
                             Text("${t.origin} → ${t.destination}", style = MaterialTheme.typography.bodyLarge)
                             Text(formatDate(t.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Text(Money.formatWithCurrency(t.fareCents), style = MaterialTheme.typography.bodyMedium)
+                        Text(Money.shown(t.fareCents), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
@@ -153,7 +153,7 @@ fun SearchScreen(vm: AppViewModel, nav: NavHostController) {
                             Text(e.title, style = MaterialTheme.typography.bodyLarge)
                             Text(formatDate(e.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Text(Money.formatWithCurrency(e.totalCents), style = MaterialTheme.typography.bodyMedium)
+                        Text(Money.shown(e.totalCents), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
@@ -169,7 +169,7 @@ fun SearchScreen(vm: AppViewModel, nav: NavHostController) {
                             )
                             Text(formatDate(x.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Text(Money.formatWithCurrency(x.amountCents), style = MaterialTheme.typography.bodyMedium)
+                        Text(Money.shown(x.amountCents), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }

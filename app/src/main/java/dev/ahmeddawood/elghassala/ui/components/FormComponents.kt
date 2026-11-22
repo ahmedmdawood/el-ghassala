@@ -1,5 +1,6 @@
 package dev.ahmeddawood.elghassala.ui.components
 
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -65,6 +66,7 @@ fun AmountField(
 fun PersonMultiSelect(
     people: List<PersonEntity>,
     selected: Set<Long>,
+    stars: Set<Long> = emptySet(),
     onToggle: (Long) -> Unit,
 ) {
     FlowRow(
@@ -72,11 +74,14 @@ fun PersonMultiSelect(
         verticalArrangement = Arrangement.spacedBy(2.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        people.forEach { person ->
+        people.sortedByDescending { it.id in stars }.forEach { person ->
             FilterChip(
                 selected = person.id in selected,
                 onClick = { onToggle(person.id) },
                 label = { Text(person.name, maxLines = 1) },
+                leadingIcon = if (person.id in stars) {
+                    { androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.Star, null, tint = dev.ahmeddawood.elghassala.ui.theme.Amber) }
+                } else null,
             )
         }
     }

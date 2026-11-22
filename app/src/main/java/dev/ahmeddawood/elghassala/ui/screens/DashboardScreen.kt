@@ -24,6 +24,8 @@ import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -123,8 +125,17 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
                 title = stringResource(R.string.dashboard_title),
                 subtitle = SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(Date()),
                 trailing = {
-                    FilledTonalButton(onClick = { nav.navigate(Routes.SEARCH) }) {
-                        Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search))
+                    val hidden by vm.privacyMode.collectAsState()
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        FilledTonalButton(onClick = { vm.togglePrivacy() }) {
+                            Icon(
+                                if (hidden) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                contentDescription = stringResource(R.string.privacy_toggle),
+                            )
+                        }
+                        FilledTonalButton(onClick = { nav.navigate(Routes.SEARCH) }) {
+                            Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search))
+                        }
                     }
                 },
             ) {
@@ -208,7 +219,7 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
                             )
                             Text(day.title, style = MaterialTheme.typography.titleLarge)
                             Text(
-                                stringResource(R.string.day_card_stats, dayTrips.size, Money.formatWithCurrency(dayTotal)),
+                                stringResource(R.string.day_card_stats, dayTrips.size, Money.shown(dayTotal)),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -358,7 +369,7 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
                                     Text("${t.origin} → ${t.destination}", style = MaterialTheme.typography.titleMedium)
                                     Text(formatDateTime(t.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                Text(Money.formatWithCurrency(t.fareCents), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(Money.shown(t.fareCents), color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
@@ -372,7 +383,7 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
                                     Text(e.title, style = MaterialTheme.typography.titleMedium)
                                     Text(formatDateTime(e.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                Text(Money.formatWithCurrency(e.totalCents), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(Money.shown(e.totalCents), color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
@@ -389,7 +400,7 @@ fun DashboardScreen(vm: AppViewModel, nav: NavHostController) {
                                     )
                                     Text(formatDateTime(x.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                Text(Money.formatWithCurrency(x.amountCents), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(Money.shown(x.amountCents), color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }

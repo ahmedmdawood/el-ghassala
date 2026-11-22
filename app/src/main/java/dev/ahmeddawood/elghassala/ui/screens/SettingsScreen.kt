@@ -47,8 +47,7 @@ import java.util.Locale
 fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
     val language by vm.language.collectAsState()
     val theme by vm.theme.collectAsState()
-    var confirmImport by remember { mutableStateOf<android.net.Uri?>(null) }
-    var confirmLegacyImport by remember { mutableStateOf<android.net.Uri?>(null) }
+    val pendingImport by vm.pendingImport.collectAsState()
     val legacyResult by vm.legacyImportResult.collectAsState()
     val importNotice by vm.importNotice.collectAsState()
 
@@ -58,10 +57,7 @@ fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
         uri?.let { vm.exportBackup(it) }
     }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        confirmImport = uri
-    }
-    val legacyImportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        confirmLegacyImport = uri
+        uri?.let { vm.prepareImport(it) }
     }
     val exportCsvLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
         uri?.let { vm.exportCsv(it) }
@@ -199,11 +195,14 @@ fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
                             Text(stringResource(R.string.export_backup))
                         }
                         TextButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/*", "*/*")) }, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.import_backup))
+                            Text(stringResource(R.string.import_any))
                         }
-                        TextButton(onClick = { legacyImportLauncher.launch(arrayOf("application/json", "text/*", "*/*")) }, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.import_legacy))
-                        }
+                        Text(
+                            stringResource(R.string.import_any_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
+                        )
                     }
                 }
             }
@@ -251,21 +250,13 @@ fun SettingsScreen(vm: AppViewModel, nav: NavHostController) {
         }
     }
 
-    confirmImport?.let { uri ->
+    pendingImport?.let { p ->
+        val legacy = p.kind == dev.ahmeddawood.elghassala.AppViewModel.ImportKind.LEGACY
         ConfirmDialog(
-            title = stringResource(R.string.import_backup),
-            text = stringResource(R.string.import_confirm),
-            onConfirm = { vm.importBackup(uri); confirmImport = null },
-            onDismiss = { confirmImport = null },
-        )
-    }
-
-    confirmLegacyImport?.let { uri ->
-        ConfirmDialog(
-            title = stringResource(R.string.import_legacy),
-            text = stringResource(R.string.import_legacy_confirm),
-            onConfirm = { vm.importLegacyBackup(uri); confirmLegacyImport = null },
-            onDismiss = { confirmLegacyImport = null },
+            title = stringResource(if (legacy) R.string.import_legacy else R.string.import_backup),
+            text = stringResource(if (legacy) R.string.import_legacy_confirm else R.string.import_confirm),
+            onConfirm = { vm.confirmPendingImport() },
+            onDismiss = { vm.cancelPendingImport() },
         )
     }
 

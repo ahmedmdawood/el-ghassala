@@ -95,13 +95,13 @@ fun ExpensesScreen(vm: AppViewModel, nav: NavHostController) {
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
-                                Text(Money.formatWithCurrency(e.totalCents), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
+                                Text(Money.shown(e.totalCents), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
                             }
                             if (payers.isNotEmpty()) {
                                 Spacer(Modifier.height(6.dp))
                                 Text(
                                     "${stringResource(R.string.who_paid)}: " + payers.joinToString(", ") {
-                                        "${records.peopleNames[it.personId] ?: ""} (${Money.format(it.paidCents)})"
+                                        "${records.peopleNames[it.personId] ?: ""} (${Money.shownPlain(it.paidCents)})"
                                     },
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,

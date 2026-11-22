@@ -101,6 +101,14 @@ data class Records(
             )
         }
 
+    /** Every past trip as a route + riders list, for route stars (نجم المشوار). */
+    fun rides(): List<dev.ahmeddawood.elghassala.domain.RouteStars.Ride> {
+        val parts = participants.groupBy { it.transportId }
+        return transports.map { t ->
+            dev.ahmeddawood.elghassala.domain.RouteStars.Ride(t.origin, t.destination, parts[t.id].orEmpty().map { it.personId })
+        }
+    }
+
     /** Per-transport grand total (fare x riders). */
     val transportTotals: Map<Long, Long>
         get() {
@@ -184,6 +192,24 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setLanguage(lang: AppLanguage) = viewModelScope.launch { settings.setLanguage(lang) }
     fun setTheme(value: AppTheme) = viewModelScope.launch { settings.setTheme(value) }
+
+    // ---- Privacy mode (وضع الستر) ----
+
+    val privacyMode: StateFlow<Boolean> = settings.privacyMode
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    init {
+        viewModelScope.launch {
+            privacyMode.collect { dev.ahmeddawood.elghassala.domain.Money.hidden = it }
+        }
+    }
+
+    fun setPrivacyMode(value: Boolean) {
+        dev.ahmeddawood.elghassala.domain.Money.hidden = value
+        viewModelScope.launch { settings.setPrivacyMode(value) }
+    }
+
+    fun togglePrivacy() = setPrivacyMode(!privacyMode.value)
 
     // ---- Playful feedback ----
 
@@ -430,6 +456,56 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 val app = getApplication<Application>()
                 importNotice.value = app.getString(R.string.legacy_import_failed) + "\n\n" + (it.message ?: it.javaClass.simpleName)
             }
+    }
+
+    enum class ImportKind { LEGACY, BACKUP }
+    data class PendingImport(val kind: ImportKind, val text: String)
+
+    /** Step 1 of the single import button: read the file and detect which format it is. */
+    val pendingImport = MutableStateFlow<PendingImport?>(null)
+    fun cancelPendingImport() { pendingImport.value = null }
+
+    fun prepareImport(uri: Uri) = viewModelScope.launch {
+        val app = getApplication<Application>()
+        val text = runCatching {
+            app.contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) } ?: error("no stream")
+        }.getOrElse {
+            importNotice.value = app.getString(R.string.import_unreadable) + "\n\n" + (it.message ?: "")
+            return@launch
+        }
+        val marker = runCatching { org.json.JSONObject(text).optString("app", "").trim().lowercase() }.getOrNull()
+        pendingImport.value = when (marker) {
+            "elghassala" -> PendingImport(ImportKind.BACKUP, text)
+            "el ghasala", "el ghassala legacy" -> PendingImport(ImportKind.LEGACY, text)
+            else -> {
+                importNotice.value = app.getString(R.string.import_unknown_format)
+                null
+            }
+        }
+    }
+
+    /** Step 2: the user confirmed. */
+    fun confirmPendingImport() = viewModelScope.launch {
+        val p = pendingImport.value ?: return@launch
+        pendingImport.value = null
+        val app = getApplication<Application>()
+        runCatching {
+            when (p.kind) {
+                ImportKind.LEGACY -> {
+                    val r = repo.importLegacy(p.text)
+                    legacyImportResult.value = r
+                    feedback("import_done", R.string.legacy_ok)
+                }
+                ImportKind.BACKUP -> {
+                    repo.replaceAll(BackupManager.parse(p.text))
+                    importNotice.value = app.getString(R.string.restore_success)
+                }
+            }
+        }.onFailure {
+            importNotice.value = app.getString(
+                if (p.kind == ImportKind.LEGACY) R.string.legacy_import_failed else R.string.restore_failed
+            ) + "\n\n" + (it.message ?: it.javaClass.simpleName)
+        }
     }
 
     fun importBackup(uri: Uri) = viewModelScope.launch {

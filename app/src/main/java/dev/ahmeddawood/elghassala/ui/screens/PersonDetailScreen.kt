@@ -115,7 +115,7 @@ fun PersonDetailScreen(vm: AppViewModel, nav: NavHostController, personId: Long)
                             myRefunds.forEach { r ->
                                 RowSpaceBetween {
                                     Text(formatDate(r.createdAt), style = MaterialTheme.typography.bodyMedium)
-                                    Text(Money.formatWithCurrency(r.amountCents), color = MaterialTheme.colorScheme.tertiary)
+                                    Text(Money.shown(r.amountCents), color = MaterialTheme.colorScheme.tertiary)
                                 }
                             }
                         }
@@ -139,7 +139,7 @@ fun PersonDetailScreen(vm: AppViewModel, nav: NavHostController, personId: Long)
                             Text(formatDate(t.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Text(
-                            "${stringResource(R.string.pays)} ${Money.format(part.paidCents)}",
+                            "${stringResource(R.string.pays)} ${Money.shownPlain(part.paidCents)}",
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
@@ -154,7 +154,7 @@ fun PersonDetailScreen(vm: AppViewModel, nav: NavHostController, personId: Long)
                             Text(e.title, style = MaterialTheme.typography.bodyLarge)
                             Text(formatDate(e.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Text(Money.formatWithCurrency(e.totalCents), style = MaterialTheme.typography.bodyMedium)
+                        Text(Money.shown(e.totalCents), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
@@ -170,7 +170,7 @@ fun PersonDetailScreen(vm: AppViewModel, nav: NavHostController, personId: Long)
                             )
                             Text(formatDate(x.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Text(Money.formatWithCurrency(x.amountCents), style = MaterialTheme.typography.bodyMedium)
+                        Text(Money.shown(x.amountCents), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }

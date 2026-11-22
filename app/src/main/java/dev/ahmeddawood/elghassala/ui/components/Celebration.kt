@@ -144,7 +144,7 @@ fun CelebrationOverlay(celebration: DayCelebration, onDismiss: () -> Unit) {
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    stringResource(R.string.celebration_total, Money.formatWithCurrency(celebration.totalCents)),
+                    stringResource(R.string.celebration_total, Money.shown(celebration.totalCents)),
                     style = MaterialTheme.typography.titleLarge, color = Color.White,
                 )
                 Spacer(Modifier.height(18.dp))

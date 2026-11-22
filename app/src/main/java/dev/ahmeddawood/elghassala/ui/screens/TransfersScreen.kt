@@ -104,7 +104,7 @@ fun TransfersScreen(vm: AppViewModel, nav: NavHostController) {
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            Text(Money.formatWithCurrency(t.amountCents), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
+                            Text(Money.shown(t.amountCents), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
                             IconButton(onClick = { pendingDelete = t.id }) {
                                 Icon(Icons.Filled.Delete, stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error)
                             }

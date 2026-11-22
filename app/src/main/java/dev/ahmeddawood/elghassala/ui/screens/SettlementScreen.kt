@@ -134,7 +134,7 @@ fun SettlementScreen(vm: AppViewModel, nav: NavHostController) {
                                         style = MaterialTheme.typography.titleMedium,
                                     )
                                     Spacer(Modifier.weight(1f))
-                                    Text(Money.formatWithCurrency(edge.amountCents), color = MaterialTheme.colorScheme.primary)
+                                    Text(Money.shown(edge.amountCents), color = MaterialTheme.colorScheme.primary)
                                 }
                                 PressScaleButton(
                                     onClick = {
@@ -177,7 +177,7 @@ fun SettlementScreen(vm: AppViewModel, nav: NavHostController) {
                                         )
                                     }
                                 }
-                                Text(Money.formatWithCurrency(refund.amountCents), color = MaterialTheme.colorScheme.tertiary)
+                                Text(Money.shown(refund.amountCents), color = MaterialTheme.colorScheme.tertiary)
                                 TextButton(onClick = { vm.setRefundCollected(refund.id, true) }) {
                                     Text(stringResource(R.string.mark_collected))
                                 }
@@ -200,6 +200,6 @@ private fun LedgerRow(label: String, value: Long) {
     if (value == 0L) return
     RowSpaceBetween {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(Money.format(value), style = MaterialTheme.typography.bodyMedium)
+        Text(Money.shownPlain(value), style = MaterialTheme.typography.bodyMedium)
     }
 }

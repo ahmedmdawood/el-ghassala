@@ -107,7 +107,7 @@ fun StatsScreen(vm: AppViewModel, nav: NavHostController) {
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Text(
-                            Money.formatWithCurrency(stats.actualExpensesCents),
+                            Money.shown(stats.actualExpensesCents),
                             color = MaterialTheme.colorScheme.onPrimary,
                             style = MaterialTheme.typography.headlineMedium,
                         )
@@ -119,7 +119,7 @@ fun StatsScreen(vm: AppViewModel, nav: NavHostController) {
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Text(
-                            Money.formatWithCurrency(stats.averageDailyCents),
+                            Money.shown(stats.averageDailyCents),
                             color = MaterialTheme.colorScheme.onPrimary,
                             style = MaterialTheme.typography.headlineMedium,
                         )
@@ -160,6 +160,8 @@ fun StatsScreen(vm: AppViewModel, nav: NavHostController) {
             }
         }
 
+        item { AwardsCard(records) }
+
         item {
             Column(Modifier.padding(horizontal = 16.dp)) {
                 Spacer(Modifier.height(12.dp))
@@ -182,7 +184,7 @@ fun StatsScreen(vm: AppViewModel, nav: NavHostController) {
 private fun StatRow(label: String, value: Long) {
     RowSpaceBetween {
         Text(label, style = MaterialTheme.typography.bodyLarge)
-        Text(Money.formatWithCurrency(value), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        Text(Money.shown(value), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
     }
 }
 

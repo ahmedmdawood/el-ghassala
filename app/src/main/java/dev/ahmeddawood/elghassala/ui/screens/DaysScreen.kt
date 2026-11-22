@@ -103,7 +103,7 @@ fun DaysScreen(vm: AppViewModel, nav: NavHostController) {
                                 )
                             }
                             Text(
-                                dev.ahmeddawood.elghassala.domain.Money.formatWithCurrency(totals),
+                                dev.ahmeddawood.elghassala.domain.Money.shown(totals),
                                 color = MaterialTheme.colorScheme.primary,
                                 style = MaterialTheme.typography.titleMedium,
                             )

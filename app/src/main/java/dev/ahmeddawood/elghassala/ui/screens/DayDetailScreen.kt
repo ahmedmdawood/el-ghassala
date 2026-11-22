@@ -124,7 +124,7 @@ fun DayDetailScreen(vm: AppViewModel, nav: NavHostController, dayId: Long) {
                         LabeledValue(stringResource(R.string.date), formatDate(day.dateMillis))
                         LabeledValue(
                             stringResource(if (day.isClosed) R.string.day_closed else R.string.day_open),
-                            Money.formatWithCurrency(dayTotal),
+                            Money.shown(dayTotal),
                         )
                     }
                 }
@@ -163,7 +163,7 @@ fun DayDetailScreen(vm: AppViewModel, nav: NavHostController, dayId: Long) {
                             Text("${t.origin} → ${t.destination}", style = MaterialTheme.typography.titleMedium)
                             Text(formatDateTime(t.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Text(Money.formatWithCurrency(t.fareCents), color = MaterialTheme.colorScheme.primary)
+                        Text(Money.shown(t.fareCents), color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
@@ -176,7 +176,7 @@ fun DayDetailScreen(vm: AppViewModel, nav: NavHostController, dayId: Long) {
                             Text(e.title, style = MaterialTheme.typography.titleMedium)
                             Text(formatDateTime(e.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Text(Money.formatWithCurrency(e.totalCents), color = MaterialTheme.colorScheme.primary)
+                        Text(Money.shown(e.totalCents), color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
@@ -192,7 +192,7 @@ fun DayDetailScreen(vm: AppViewModel, nav: NavHostController, dayId: Long) {
                             )
                             Text(formatDateTime(x.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Text(Money.formatWithCurrency(x.amountCents), color = MaterialTheme.colorScheme.primary)
+                        Text(Money.shown(x.amountCents), color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }

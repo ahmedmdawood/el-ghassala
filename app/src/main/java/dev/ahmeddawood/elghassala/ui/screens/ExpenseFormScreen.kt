@@ -132,7 +132,7 @@ fun ExpenseFormScreen(vm: AppViewModel, nav: NavHostController, dayId: Long?, ed
             }
             if (payers.size > 1 && totalCents > 0) {
                 Text(
-                    "${stringResource(R.string.actual_paid)}: ${Money.formatWithCurrency(payerSum)} / ${Money.formatWithCurrency(totalCents)}",
+                    "${stringResource(R.string.actual_paid)}: ${Money.shown(payerSum)} / ${Money.shown(totalCents)}",
                     color = if (payerSum == totalCents) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                     style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                 )

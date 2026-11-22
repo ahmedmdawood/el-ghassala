@@ -88,6 +88,9 @@ fun RoutesScreen(vm: AppViewModel, nav: NavHostController) {
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(records.routes, key = { it.id }) { route ->
+                    val routeStars = remember(records.transports, records.participants, route.origin, route.destination) {
+                        dev.ahmeddawood.elghassala.domain.RouteStars.stars(records.rides(), route.origin, route.destination)
+                    }
                     SectionCard {
                         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.Route, null, tint = MaterialTheme.colorScheme.primary)
@@ -95,10 +98,17 @@ fun RoutesScreen(vm: AppViewModel, nav: NavHostController) {
                             Column(Modifier.weight(1f)) {
                                 Text(route.name, style = MaterialTheme.typography.titleMedium, maxLines = 1)
                                 Text(
-                                    "${route.origin} → ${route.destination} · ${Money.formatWithCurrency(route.defaultFareCents)} · ${route.usageCount} ${stringResource(R.string.used_count)}",
+                                    "${route.origin} → ${route.destination} · ${Money.shown(route.defaultFareCents)} · ${route.usageCount} ${stringResource(R.string.used_count)}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
+                                if (routeStars.isNotEmpty()) {
+                                    Text(
+                                        "★ " + records.people.filter { it.id in routeStars }.joinToString(", ") { it.name },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = dev.ahmeddawood.elghassala.ui.theme.Amber,
+                                    )
+                                }
                             }
                             IconButton(onClick = {
                                 nav.navigate(

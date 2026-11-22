@@ -96,7 +96,7 @@ fun TransportScreen(vm: AppViewModel, nav: NavHostController) {
                                     )
                                 }
                                 Text(
-                                    Money.formatWithCurrency(t.fareCents * riders.size.coerceAtLeast(1)),
+                                    Money.shown(t.fareCents * riders.size.coerceAtLeast(1)),
                                     color = MaterialTheme.colorScheme.primary,
                                     style = MaterialTheme.typography.titleMedium,
                                 )
@@ -106,7 +106,7 @@ fun TransportScreen(vm: AppViewModel, nav: NavHostController) {
                                 riders.forEach { p ->
                                     RowSpaceBetween {
                                         Text(records.peopleNames[p.personId] ?: "#${p.personId}", style = MaterialTheme.typography.bodyMedium)
-                                        Text(Money.formatWithCurrency(p.paidCents), style = MaterialTheme.typography.bodyMedium)
+                                        Text(Money.shown(p.paidCents), style = MaterialTheme.typography.bodyMedium)
                                     }
                                 }
                             }
@@ -114,7 +114,7 @@ fun TransportScreen(vm: AppViewModel, nav: NavHostController) {
                                 Spacer(Modifier.height(6.dp))
                                 refunds.forEach { r ->
                                     Text(
-                                        "${stringResource(R.string.driver_owes)} ${records.peopleNames[r.personId] ?: ""}: ${Money.formatWithCurrency(r.amountCents)}",
+                                        "${stringResource(R.string.driver_owes)} ${records.peopleNames[r.personId] ?: ""}: ${Money.shown(r.amountCents)}",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.tertiary,
                                     )

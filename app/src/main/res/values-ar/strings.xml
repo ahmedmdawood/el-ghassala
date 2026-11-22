@@ -275,4 +275,18 @@
     <string name="freq_often">كتير</string>
     <string name="freq_balanced">متوازن</string>
     <string name="freq_rare">نادر</string>
+    <string name="privacy_toggle">وضع الستر</string>
+    <string name="import_any">استيراد ملف</string>
+    <string name="import_any_hint">اختار أي ملف الغسالة، قديم أو جديد. التطبيق بيعرف نوعه لوحده.</string>
+    <string name="import_unreadable">مقدرتش أقرأ الملف ده.</string>
+    <string name="import_unknown_format">الملف ده مش نسخة من الغسالة (لا قديم ولا جديد).</string>
+    <string name="route_stars_line">الصحاب الدايمين على المشوار ده: %1$s</string>
+    <string name="route_stars_pick">ضيفهم</string>
+    <string name="awards_title">أوسمة الغسالة</string>
+    <string name="award_trips_king">ملك المشاوير</string>
+    <string name="award_trips_detail">%1$d مشوار مع الشلة</string>
+    <string name="award_generous">الكريم</string>
+    <string name="award_generous_detail">دفع %1$s من جيبه</string>
+    <string name="award_regular">زبون الخط</string>
+    <string name="award_regular_detail">%1$d مرة على نفس المشوار</string>
 </resources>

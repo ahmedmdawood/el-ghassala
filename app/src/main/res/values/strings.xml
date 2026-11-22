@@ -275,4 +275,18 @@
     <string name="freq_often">Often</string>
     <string name="freq_balanced">Balanced</string>
     <string name="freq_rare">Rare</string>
+    <string name="privacy_toggle">Privacy mode</string>
+    <string name="import_any">Import a file</string>
+    <string name="import_any_hint">Pick any El Ghassala file, old or new. The app detects the format by itself.</string>
+    <string name="import_unreadable">Could not read that file.</string>
+    <string name="import_unknown_format">This file is not an El Ghassala export (old or new).</string>
+    <string name="route_stars_line">Regular riders on this route: %1$s</string>
+    <string name="route_stars_pick">Add them</string>
+    <string name="awards_title">Ghassala awards</string>
+    <string name="award_trips_king">Trips King</string>
+    <string name="award_trips_detail">%1$d trips with the crew</string>
+    <string name="award_generous">The Generous One</string>
+    <string name="award_generous_detail">Paid %1$s out of pocket</string>
+    <string name="award_regular">Line Regular</string>
+    <string name="award_regular_detail">%1$d rides on the same route</string>
 </resources>

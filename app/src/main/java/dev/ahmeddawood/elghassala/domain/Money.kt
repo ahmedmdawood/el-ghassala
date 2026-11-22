@@ -1,11 +1,26 @@
 package dev.ahmeddawood.elghassala.domain
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.abs
 
 /** Money is always stored as piasters (1/100 EGP) in a Long. Never floats. */
 object Money {
+
+    /** Privacy mode (وضع الستر): when true every amount shown in the UI is masked. Snapshot state, so screens recompose. */
+    var hidden by mutableStateOf(false)
+
+    const val MASK = "•••"
+
+    /** For display in the UI: masked when privacy mode is on. Exports use [formatWithCurrency] directly. */
+    fun shown(cents: Long, locale: Locale = Locale.getDefault()): String =
+        if (hidden) MASK else formatWithCurrency(cents, locale)
+
+    fun shownPlain(cents: Long, locale: Locale = Locale.getDefault()): String =
+        if (hidden) MASK else format(cents, locale)
 
     /** Parses user input like "12.5", "١٢٫٥", "12,50" into piasters. Null when invalid. */
     fun parse(input: String?): Long? {

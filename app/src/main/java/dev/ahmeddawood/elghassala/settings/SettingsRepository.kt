@@ -20,6 +20,8 @@ class SettingsRepository(private val context: Context) {
         val theme = stringPreferencesKey("theme")
         val funEnabled = booleanPreferencesKey("fun_enabled")
         val funFrequency = stringPreferencesKey("fun_frequency")
+        val privacy = booleanPreferencesKey("privacy_mode")
+        val spinSeen = booleanPreferencesKey("spin_seen")
     }
 
     val language: Flow<AppLanguage> = context.dataStore.data.map {
@@ -61,6 +63,12 @@ class SettingsRepository(private val context: Context) {
     /** Playful feedback messages: on/off and how often (often / balanced / rare). */
     val funEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.funEnabled] ?: true }
     val funFrequency: Flow<String> = context.dataStore.data.map { it[Keys.funFrequency] ?: "balanced" }
+
+    /** وضع الستر: mask every amount. */
+    val privacyMode: Flow<Boolean> = context.dataStore.data.map { it[Keys.privacy] ?: false }
+    suspend fun setPrivacyMode(value: Boolean) {
+        context.dataStore.edit { it[Keys.privacy] = value }
+    }
 
     suspend fun setFunEnabled(value: Boolean) {
         context.dataStore.edit { it[Keys.funEnabled] = value }

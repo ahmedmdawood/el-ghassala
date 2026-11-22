@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -143,7 +144,29 @@ fun TransportFormScreen(vm: AppViewModel, nav: NavHostController, dayId: Long?, 
             OutlinedTextField(notes, { notes = it }, label = { Text(stringResource(R.string.notes)) }, modifier = Modifier.fillMaxWidth())
 
             FormSectionTitle(stringResource(R.string.participants))
-            PersonMultiSelect(people, selected) { pid ->
+            val rides = remember(records.transports, records.participants) { records.rides() }
+            val stars = remember(rides, origin, destination) {
+                dev.ahmeddawood.elghassala.domain.RouteStars.stars(rides, origin, destination)
+            }
+            if (stars.isNotEmpty()) {
+                val names = people.filter { it.id in stars }.joinToString(", ") { it.name }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Star, null, tint = dev.ahmeddawood.elghassala.ui.theme.Amber)
+                    Text(
+                        " " + stringResource(R.string.route_stars_line, names),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (!stars.all { it in selected }) {
+                        androidx.compose.material3.TextButton(onClick = {
+                            val add = stars.filter { it !in selected && people.any { p -> p.id == it } }
+                            selected = selected + add
+                            paidAmounts = paidAmounts + add.associateWith { Money.format(fareCents) }
+                        }) { Text(stringResource(R.string.route_stars_pick)) }
+                    }
+                }
+            }
+            PersonMultiSelect(people, selected, stars) { pid ->
                 selected = if (pid in selected) selected - pid else selected + pid
                 paidAmounts = if (pid in selected) {
                     paidAmounts - pid
@@ -185,24 +208,24 @@ fun TransportFormScreen(vm: AppViewModel, nav: NavHostController, dayId: Long?, 
                         }
                         RowSpaceBetween {
                             Text(stringResource(R.string.expected_total))
-                            Text(Money.formatWithCurrency(fullRide))
+                            Text(Money.shown(fullRide))
                         }
                         RowSpaceBetween {
                             Text(stringResource(R.string.actual_paid))
-                            Text(Money.formatWithCurrency(totalPaid))
+                            Text(Money.shown(totalPaid))
                         }
                         if (excess > 0) {
                             val computation = FinanceEngine.computeTransport(fareCents, paidMap())
                             computation.driverRefunds.forEach { (pid, amount) ->
                                 Text(
-                                    "${stringResource(R.string.driver_owes)} ${records.peopleNames[pid] ?: ""}: ${Money.formatWithCurrency(amount)}",
+                                    "${stringResource(R.string.driver_owes)} ${records.peopleNames[pid] ?: ""}: ${Money.shown(amount)}",
                                     color = MaterialTheme.colorScheme.tertiary,
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                             }
                         } else if (excess < 0) {
                             Text(
-                                "${stringResource(R.string.owed_to_driver)}: ${Money.formatWithCurrency(-excess)}",
+                                "${stringResource(R.string.owed_to_driver)}: ${Money.shown(-excess)}",
                                 color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodyMedium,
                             )
@@ -255,7 +278,7 @@ fun TransportFormScreen(vm: AppViewModel, nav: NavHostController, dayId: Long?, 
                     Text(stringResource(R.string.driver_refund_question))
                     Spacer(Modifier.height(8.dp))
                     refunds.forEach { r ->
-                        Text("${records.peopleNames[r.personId] ?: ""}: ${Money.formatWithCurrency(r.amountCents)}")
+                        Text("${records.peopleNames[r.personId] ?: ""}: ${Money.shown(r.amountCents)}")
                     }
                 }
             },

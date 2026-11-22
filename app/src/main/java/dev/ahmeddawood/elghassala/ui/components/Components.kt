@@ -125,7 +125,7 @@ fun AnimatedMoney(
         modifier = modifier,
     ) { value ->
         Text(
-            text = Money.formatWithCurrency(value),
+            text = Money.shown(value),
             color = color,
             fontSize = fontSize.sp,
             fontWeight = fontWeight,
@@ -201,5 +201,5 @@ fun BalanceText(cents: Long, fontSize: Int = 15) {
         cents < 0 -> NegativeRed
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
-    Text(Money.formatWithCurrency(cents), color = color, fontSize = fontSize.sp, fontWeight = FontWeight.SemiBold)
+    Text(Money.shown(cents), color = color, fontSize = fontSize.sp, fontWeight = FontWeight.SemiBold)
 }
