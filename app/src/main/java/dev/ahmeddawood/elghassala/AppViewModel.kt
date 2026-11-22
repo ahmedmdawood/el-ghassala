@@ -412,7 +412,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                     val total = input.fareCents * input.paid.size
                     val onePayer = input.paid.size > 1 && input.paid.values.count { it > 0 } == 1 &&
                         input.paid.values.sum() >= total
-                    feedback(if (onePayer) "trip_one_payer" else "trip_added", R.string.transport_saved)
+                    val bucket = if (onePayer) "trip_one_payer" else
+                        dev.ahmeddawood.elghassala.playful.JokeBuckets.tripCandidates(
+                            input.paid.size, input.fareCents,
+                            dev.ahmeddawood.elghassala.playful.JokeBuckets.hourOf(input.dateMillis),
+                        ).random()
+                    feedback(bucket, R.string.transport_saved)
                 }
             }
             .onFailure { _events.emit(UiEvent.Message(R.string.error_required)) }
@@ -438,7 +443,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             input = inputIn.copy(dayId = openId)
         }
         runCatching { repo.saveExpense(id, input) }
-            .onSuccess { feedback("expense_added", R.string.saved_successfully) }
+            .onSuccess {
+                feedback(
+                    dev.ahmeddawood.elghassala.playful.JokeBuckets.expenseCandidates(input.title).random(),
+                    R.string.saved_successfully,
+                )
+            }
             .onFailure {
                 _events.emit(
                     UiEvent.Message(
