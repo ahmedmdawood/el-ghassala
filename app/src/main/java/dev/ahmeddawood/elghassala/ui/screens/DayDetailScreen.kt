@@ -1,5 +1,6 @@
 package dev.ahmeddawood.elghassala.ui.screens
 
+import dev.ahmeddawood.elghassala.ui.arrow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -160,7 +161,7 @@ fun DayDetailScreen(vm: AppViewModel, nav: NavHostController, dayId: Long) {
                         Icon(Icons.Filled.DirectionsBus, null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.size(10.dp))
                         Column(Modifier.weight(1f)) {
-                            Text("${t.origin} → ${t.destination}", style = MaterialTheme.typography.titleMedium)
+                            Text("${t.origin} ${arrow()} ${t.destination}", style = MaterialTheme.typography.titleMedium)
                             Text(formatDateTime(t.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Text(Money.shown(t.fareCents), color = MaterialTheme.colorScheme.primary)
@@ -187,7 +188,7 @@ fun DayDetailScreen(vm: AppViewModel, nav: NavHostController, dayId: Long) {
                         Spacer(Modifier.size(10.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "${records.peopleNames[x.fromPersonId] ?: ""} → ${records.peopleNames[x.toPersonId] ?: ""}",
+                                "${records.peopleNames[x.fromPersonId] ?: ""} ${arrow()} ${records.peopleNames[x.toPersonId] ?: ""}",
                                 style = MaterialTheme.typography.titleMedium,
                             )
                             Text(formatDateTime(x.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

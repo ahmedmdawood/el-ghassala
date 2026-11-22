@@ -1,5 +1,6 @@
 package dev.ahmeddawood.elghassala.ui.screens
 
+import dev.ahmeddawood.elghassala.ui.arrow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -137,7 +138,7 @@ fun SearchScreen(vm: AppViewModel, nav: NavHostController) {
                         Icon(Icons.Filled.DirectionsBus, null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.size(8.dp))
                         Column(Modifier.weight(1f)) {
-                            Text("${t.origin} → ${t.destination}", style = MaterialTheme.typography.bodyLarge)
+                            Text("${t.origin} ${arrow()} ${t.destination}", style = MaterialTheme.typography.bodyLarge)
                             Text(formatDate(t.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Text(Money.shown(t.fareCents), style = MaterialTheme.typography.bodyMedium)
@@ -164,7 +165,7 @@ fun SearchScreen(vm: AppViewModel, nav: NavHostController) {
                         Spacer(Modifier.size(8.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "${records.peopleNames[x.fromPersonId] ?: ""} → ${records.peopleNames[x.toPersonId] ?: ""}",
+                                "${records.peopleNames[x.fromPersonId] ?: ""} ${arrow()} ${records.peopleNames[x.toPersonId] ?: ""}",
                                 style = MaterialTheme.typography.bodyLarge,
                             )
                             Text(formatDate(x.dateMillis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

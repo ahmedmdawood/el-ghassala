@@ -318,7 +318,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val tripLines = dayTransports.sortedBy { it.dateMillis }.map { t ->
             val riders = rec.participants.count { it.transportId == t.id }.coerceAtLeast(1)
             dev.ahmeddawood.elghassala.ui.components.ReceiptLine(
-                "${t.origin}→${t.destination}", "x$riders", t.fareCents * riders,
+                "${t.origin} ${dev.ahmeddawood.elghassala.ui.arrowForLocale()} ${t.destination}", "x$riders", t.fareCents * riders,
             )
         }
         val expenseLines = rec.expenses.filter { it.dayId == day.id }.sortedBy { it.dateMillis }.map {

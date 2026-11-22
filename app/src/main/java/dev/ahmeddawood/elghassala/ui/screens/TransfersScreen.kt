@@ -1,5 +1,6 @@
 package dev.ahmeddawood.elghassala.ui.screens
 
+import dev.ahmeddawood.elghassala.ui.arrow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -95,7 +96,7 @@ fun TransfersScreen(vm: AppViewModel, nav: NavHostController) {
                             Spacer(Modifier.size(10.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(
-                                    "${records.peopleNames[t.fromPersonId] ?: ""} → ${records.peopleNames[t.toPersonId] ?: ""}",
+                                    "${records.peopleNames[t.fromPersonId] ?: ""} ${arrow()} ${records.peopleNames[t.toPersonId] ?: ""}",
                                     style = MaterialTheme.typography.titleMedium,
                                 )
                                 Text(

@@ -1,5 +1,6 @@
 package dev.ahmeddawood.elghassala.ui.screens
 
+import dev.ahmeddawood.elghassala.ui.arrow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -88,7 +89,7 @@ fun TransportScreen(vm: AppViewModel, nav: NavHostController) {
                                 Icon(Icons.Filled.DirectionsBus, null, tint = MaterialTheme.colorScheme.primary)
                                 Spacer(Modifier.size(10.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text("${t.origin} → ${t.destination}", style = MaterialTheme.typography.titleMedium)
+                                    Text("${t.origin} ${arrow()} ${t.destination}", style = MaterialTheme.typography.titleMedium)
                                     Text(
                                         "${formatDateTime(t.dateMillis)} · ${riders.size} ${stringResource(R.string.participants)}",
                                         style = MaterialTheme.typography.bodyMedium,

@@ -1,5 +1,6 @@
 package dev.ahmeddawood.elghassala.ui.screens
 
+import dev.ahmeddawood.elghassala.ui.arrow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -98,7 +99,7 @@ fun RoutesScreen(vm: AppViewModel, nav: NavHostController) {
                             Column(Modifier.weight(1f)) {
                                 Text(route.name, style = MaterialTheme.typography.titleMedium, maxLines = 1)
                                 Text(
-                                    "${route.origin} → ${route.destination} · ${Money.shown(route.defaultFareCents)} · ${route.usageCount} ${stringResource(R.string.used_count)}",
+                                    "${route.origin} ${arrow()} ${route.destination} · ${Money.shown(route.defaultFareCents)} · ${route.usageCount} ${stringResource(R.string.used_count)}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )

@@ -1,5 +1,6 @@
 package dev.ahmeddawood.elghassala.ui.screens
 
+import dev.ahmeddawood.elghassala.ui.arrow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -130,7 +131,7 @@ fun SettlementScreen(vm: AppViewModel, nav: NavHostController) {
                                     Icon(Icons.Filled.SwapHoriz, null, tint = MaterialTheme.colorScheme.primary)
                                     Spacer(Modifier.size(8.dp))
                                     Text(
-                                        "${records.peopleNames[edge.fromPersonId] ?: ""} → ${records.peopleNames[edge.toPersonId] ?: ""}",
+                                        "${records.peopleNames[edge.fromPersonId] ?: ""} ${arrow()} ${records.peopleNames[edge.toPersonId] ?: ""}",
                                         style = MaterialTheme.typography.titleMedium,
                                     )
                                     Spacer(Modifier.weight(1f))
@@ -171,7 +172,7 @@ fun SettlementScreen(vm: AppViewModel, nav: NavHostController) {
                                     )
                                     if (transport != null) {
                                         Text(
-                                            "${transport.origin} → ${transport.destination} · ${formatDate(transport.dateMillis)}",
+                                            "${transport.origin} ${arrow()} ${transport.destination} · ${formatDate(transport.dateMillis)}",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
