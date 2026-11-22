@@ -392,7 +392,11 @@ class GhassalaRepository(private val db: AppDatabase) {
             val dateMillis = d.date?.let {
                 runCatching { dayFormat.parse(it)?.time }.getOrNull()
             } ?: d.createdAt
-            val sameDay = existingDays.firstOrNull { it.title == d.title.ifBlank { d.date ?: "day ${d.id}" } && it.dateMillis == dateMillis }
+            val baseTitle = d.title.ifBlank { d.date ?: "day ${d.id}" }
+            val sameDay = existingDays.firstOrNull {
+                it.dateMillis == dateMillis &&
+                    (it.title == baseTitle || Regex("^" + Regex.escape(baseTitle) + " \\(\\d+\\)$").matches(it.title))
+            }
             if (sameDay != null) {
                 dayIds[d.id] = sameDay.id
                 dayDupes++

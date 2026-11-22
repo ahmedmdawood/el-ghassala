@@ -18,7 +18,7 @@ class SurpriseLogicTest {
 
     @Test
     fun star_goesToFrequentRidersOnThatRouteOnly() {
-        val rides = listOf(ride(1, 2), ride(1, 2), ride(1), ride(1), ride(2), RouteStars.Ride("Home", "Mall", listOf(3, 3, 3, 3)))
+        val rides = listOf(ride(1, 2), ride(1, 2), ride(1), ride(1), ride(2), RouteStars.Ride("Home", "Mall", listOf(3)), RouteStars.Ride("Home", "Mall", listOf(3)), RouteStars.Ride("Home", "Mall", listOf(3)))
         // person 1: 4 rides, person 2: 3 rides (>= 70% of 4 is 2.8, so yes), person 3 not on this route
         assertEquals(setOf(1L, 2L), RouteStars.stars(rides, " home ", "WORK"))
         assertEquals(setOf(3L), RouteStars.stars(rides + RouteStars.Ride("Home", "Mall", listOf(3)), "Home", "Mall"))
