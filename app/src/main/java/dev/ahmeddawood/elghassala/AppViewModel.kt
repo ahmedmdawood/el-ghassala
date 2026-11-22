@@ -51,8 +51,8 @@ data class Records(
     val beneficiaries: List<dev.ahmeddawood.elghassala.data.db.ExpenseBeneficiaryEntity> = emptyList(),
     val transfers: List<dev.ahmeddawood.elghassala.data.db.TransferEntity> = emptyList(),
 ) {
-    val peopleNames: Map<Long, String> get() = people.associate { it.id to it.name }
-    val activePeople: List<PersonEntity> get() = people.filter { !it.archived }
+    val peopleNames: Map<Long, String> by lazy(LazyThreadSafetyMode.NONE) { people.associate { it.id to it.name } }
+    val activePeople: List<PersonEntity> by lazy(LazyThreadSafetyMode.NONE) { people.filter { !it.archived } }
 
     fun transportRecords(dayFilter: Set<Long>? = null): List<BalanceCalculator.TransportRecord> {
         val parts = participants.groupBy { it.transportId }
@@ -398,7 +398,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---- Transport ----
 
-    fun saveTransport(id: Long?, inputIn: TransportInput, markRefundsCollected: Boolean? = null) = viewModelScope.launch {
+    fun saveTransport(
+        id: Long?, inputIn: TransportInput, markRefundsCollected: Boolean? = null,
+        onSaved: ((List<DriverRefundEntity>) -> Unit)? = null,
+    ) = viewModelScope.launch {
         var input = inputIn
         if (id == null) {
             val openId = requireOpenDayId() ?: return@launch
@@ -410,8 +413,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                     refunds.forEach { repo.setRefundCollected(it.id, markRefundsCollected) }
                 }
                 if (refunds.isNotEmpty() && markRefundsCollected == null) {
-                    _events.emit(UiEvent.RefundPrompt(refunds))
+                    if (onSaved != null) onSaved(refunds) else _events.emit(UiEvent.RefundPrompt(refunds))
                 } else {
+                    onSaved?.invoke(emptyList())
                     val total = input.fareCents * input.paid.size
                     val onePayer = input.paid.size > 1 && input.paid.values.count { it > 0 } == 1 &&
                         input.paid.values.sum() >= total

@@ -264,12 +264,14 @@ fun TransportFormScreen(vm: AppViewModel, nav: NavHostController, dayId: Long?, 
                         notes = notes,
                         routeId = pickedRoute?.id,
                     )
-                    vm.saveTransport(editId, input)
                     pickedRoute?.let { vm.markRouteUsed(it.id) }
                     if (saveAsRoute) {
                         vm.saveRoute(null, "$origin - $destination", origin, destination, fareCents)
                     }
-                    nav.popBackStack()
+                    // Leave only after the save finished; with extra paid, ask about the refund first.
+                    vm.saveTransport(editId, input, onSaved = { refunds ->
+                        if (refunds.isEmpty()) nav.popBackStack() else pendingRefunds = refunds
+                    })
                 },
                 enabled = saveEnabled,
                 modifier = Modifier.fillMaxWidth(),
@@ -281,26 +283,28 @@ fun TransportFormScreen(vm: AppViewModel, nav: NavHostController, dayId: Long?, 
     }
 
     pendingRefunds?.let { refunds ->
+        val finish = { pendingRefunds = null; nav.popBackStack(); Unit }
         AlertDialog(
-            onDismissRequest = { pendingRefunds = null },
+            onDismissRequest = { finish() },
             title = { Text(stringResource(R.string.driver_refund_title)) },
             text = {
                 Column {
-                    Text(stringResource(R.string.driver_refund_question))
-                    Spacer(Modifier.height(8.dp))
+                    val extra = Money.shown(refunds.sumOf { it.amountCents })
                     refunds.forEach { r ->
-                        Text("${records.peopleNames[r.personId] ?: ""}: ${Money.shown(r.amountCents)}")
+                        val name = records.peopleNames[r.personId] ?: ""
+                        Text(stringResource(R.string.driver_refund_question, extra, name, Money.shown(r.amountCents)))
+                        Spacer(Modifier.height(8.dp))
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
                     refunds.forEach { vm.setRefundCollected(it.id, true) }
-                    pendingRefunds = null
+                    finish()
                 }) { Text(stringResource(R.string.refund_received_yes)) }
             },
             dismissButton = {
-                TextButton(onClick = { pendingRefunds = null }) { Text(stringResource(R.string.refund_received_no)) }
+                TextButton(onClick = { finish() }) { Text(stringResource(R.string.refund_received_no)) }
             },
         )
     }
